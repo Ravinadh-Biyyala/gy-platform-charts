@@ -9,13 +9,14 @@ reproduces what is running.
 
 | Chart | Env | Namespace | Release |
 |---|---|---|---|
-| `charts/gdb` | DEV, UAT | gdb-los | gdb |
+| `charts/gdb` | DEV, UAT | gdb-dev (DEV), gdb-uat (UAT) | gdb |
 | `charts/keycloak` | UAT | keycloak | keycloak |
 | `charts/gpl-customer-portal` | DEV | react-gpl-portal-dev | gpl-customer-portal |
 | `charts/mayan` | DEV | mayan-edms | mayan |
 | `charts/mayan-uat` | UAT | mayan-edms | mayan |
 | `charts/mayan-node-backend` | DEV, UAT | mayan-edms | mayan-node-backend |
 | `charts/embrace` | DEV | mhsss-embrace | embrace |
+| `charts/mule-log-archiver` | UAT | mule-log-archiver | mule-log-archiver |
 | `upstream/mariadb-operator` | DEV, UAT | values only (upstream chart 26.10.1) | |
 
 `values.yaml` = chart defaults, `values-<env>.yaml` = what differs per environment.

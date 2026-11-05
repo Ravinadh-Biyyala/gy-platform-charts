@@ -1,0 +1,62 @@
+apiVersion: v1
+data:
+  archive_mule_log.sh: |
+    #!/bin/bash
+    set -uo pipefail
+
+    APP_NS="${APP_NS:?APP_NS not set}"
+    APP_PREFIX="${APP_PREFIX:-nis-system-api}"
+    CONTAINER="${CONTAINER:-app}"
+    REMOTE_LOG="${REMOTE_LOG:-/mnt/overlay/opt/mule/logs/mule-0.log}"
+    ARCHIVE_DIR="${ARCHIVE_DIR:-/archive}"
+    RETENTION_DAYS="${RETENTION_DAYS:-30}"
+
+    # Runs at 00:00, so the archive is labelled with the previous day's date
+    LOG_DATE=$(date -d "@$(( $(date +%s) - 86400 ))" +%Y-%m-%d)
+    RUN_TS=$(date +%Y%m%d_%H%M%S)
+    WORK_DIR=$(mktemp -d)
+    trap 'rm -rf "$WORK_DIR"' EXIT
+    mkdir -p "$ARCHIVE_DIR"
+
+    log() { echo "$(date '+%F %T') [$1] $2"; }
+
+    PODS=$(kubectl get pods -n "$APP_NS" --no-headers \
+             -o custom-columns=NAME:.metadata.name,PHASE:.status.phase \
+           | awk -v p="$APP_PREFIX" '$1 ~ "^"p"-" && $2=="Running" {print $1}')
+
+    if [[ -z "$PODS" ]]; then
+      log ERROR "No running pods with prefix '$APP_PREFIX' in namespace '$APP_NS'"
+      exit 1
+    fi
+
+    FAILED=0
+    for POD in $PODS; do
+      BASE="${APP_PREFIX}_${POD##*-}_mule-0_${LOG_DATE}_${RUN_TS}"
+      LOCAL_LOG="$WORK_DIR/${BASE}.log"
+      log INFO "Copying $REMOTE_LOG from $POD"
+
+      if ! kubectl exec -n "$APP_NS" "$POD" -c "$CONTAINER" -- cat "$REMOTE_LOG" > "$LOCAL_LOG"; then
+        log ERROR "Could not read log from $POD"; FAILED=1; continue
+      fi
+      if [[ ! -s "$LOCAL_LOG" ]]; then
+        log WARN "Log in $POD is empty, skipping"; continue
+      fi
+
+      if command -v zip >/dev/null 2>&1; then
+        OUT="$ARCHIVE_DIR/${BASE}.zip"
+        zip -j -9 -q "$OUT" "$LOCAL_LOG" && zip -T -q "$OUT" || { log ERROR "zip failed for $POD"; FAILED=1; continue; }
+      else
+        OUT="$ARCHIVE_DIR/${BASE}.tar.gz"
+        tar -czf "$OUT" -C "$WORK_DIR" "${BASE}.log" || { log ERROR "tar failed for $POD"; FAILED=1; continue; }
+      fi
+      log INFO "Archived -> $OUT ($(du -h "$OUT" | cut -f1))"
+    done
+
+    DELETED=$(find "$ARCHIVE_DIR" -maxdepth 1 -type f -name "${APP_PREFIX}_*" \
+                -mtime +"$RETENTION_DAYS" -print -delete | wc -l)
+    log INFO "Retention: removed $DELETED archive(s) older than $RETENTION_DAYS days"
+
+    exit $FAILED
+kind: ConfigMap
+metadata:
+  name: mule-log-archiver-script

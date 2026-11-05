@@ -1,0 +1,69 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: mule-log-archiver
+spec:
+  concurrencyPolicy: Forbid
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    metadata: {}
+    spec:
+      activeDeadlineSeconds: 1800
+      backoffLimit: 2
+      template:
+        metadata: {}
+        spec:
+          containers:
+            - command:
+                - /bin/bash
+                - /scripts/archive_mule_log.sh
+              env:
+                - name: TZ
+                  value: IST-5:30
+                - name: APP_NS
+                  value: 0239184e-9e71-4583-a387-ba117a4e149c
+                - name: APP_PREFIX
+                  value: nis-system-api
+                - name: CONTAINER
+                  value: app
+                - name: REMOTE_LOG
+                  value: /mnt/overlay/opt/mule/logs/mule-0.log
+                - name: RETENTION_DAYS
+                  value: "30"
+              image: '{{ .Values.image }}'
+              imagePullPolicy: IfNotPresent
+              name: archiver
+              resources:
+                limits:
+                  cpu: 500m
+                  memory: 256Mi
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
+              terminationMessagePath: /dev/termination-log
+              terminationMessagePolicy: File
+              volumeMounts:
+                - mountPath: /scripts
+                  name: script
+                - mountPath: /archive
+                  name: archive
+          dnsPolicy: ClusterFirst
+          restartPolicy: Never
+          schedulerName: default-scheduler
+          securityContext: {}
+          serviceAccount: mule-log-archiver
+          serviceAccountName: mule-log-archiver
+          terminationGracePeriodSeconds: 30
+          volumes:
+            - configMap:
+                defaultMode: 493
+                name: mule-log-archiver-script
+              name: script
+            - name: archive
+              persistentVolumeClaim:
+                claimName: mule-log-archive-pvc
+  schedule: '{{ .Values.schedule }}'
+  startingDeadlineSeconds: 3600
+  successfulJobsHistoryLimit: 3
+  suspend: false
+  timeZone: Asia/Kolkata

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: mule-log-archiver
+description: CronJob that archives Mule runtime logs from Runtime Fabric pods to a PVC
+type: application
+version: 0.1.0
+appVersion: "1.0"
