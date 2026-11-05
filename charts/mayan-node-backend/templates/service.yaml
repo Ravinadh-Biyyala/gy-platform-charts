@@ -1,0 +1,21 @@
+{{- include "mnb.checkNamespace" . }}
+{{- /* The API has no authentication: refuse to render anything that would
+       publish it outside the cluster. */ -}}
+{{- if ne .Values.backend.service.type "ClusterIP" }}
+{{- fail "backend.service.type must be ClusterIP: the API has no authentication and must stay in-cluster" }}
+{{- end }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "mnb.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "mnb.name" . }}
+spec:
+  type: ClusterIP
+  selector:
+    app: {{ include "mnb.name" . }}
+  ports:
+    - port: {{ .Values.backend.service.port }}
+      targetPort: {{ .Values.backend.containerPort }}
+      protocol: TCP

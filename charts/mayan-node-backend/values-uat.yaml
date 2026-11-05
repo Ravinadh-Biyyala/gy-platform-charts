@@ -1,0 +1,27 @@
+backend:
+  containerPort: 4000
+  deployment: mayan-node-backend
+  entrypointEnv:
+    DMS_ENSURE_TIMEOUT: '120'
+  env:
+    API_DOCS_ENABLED: 'false'
+    BULK_MAX_DOCUMENTS: '100'
+    CORS_ORIGINS: https://nisuat.portal.gov.gy,https://customer-agility-7541--nisuat.sandbox.lightning.force.com
+    DMS_TLS_INSECURE: 'false'
+    DMS_URL: https://mayanuat.services.gov.gy/api/v4
+    DMS_USERNAME: admin
+    PORT: '4000'
+    UPLOAD_MAX_MB: '25'
+  replicas: 2
+  secretKeys:
+    DMS_PASSWORD: the UAT Mayan account's password (DMS_USERNAME above)
+  secretName: mayan-node-backend-secrets
+  service:
+    port: 4000
+    type: ClusterIP
+cluster: uat-workload
+environment: uat
+image:
+  repository: ravinadh/mayan-node-backend
+  tag: mayan-node-uat15
+namespace: mayan-edms

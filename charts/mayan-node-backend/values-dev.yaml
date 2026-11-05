@@ -1,0 +1,27 @@
+backend:
+  containerPort: 4000
+  deployment: mayan-node-backend
+  entrypointEnv:
+    DMS_ENSURE_TIMEOUT: '120'
+  env:
+    API_DOCS_ENABLED: 'true'
+    BULK_MAX_DOCUMENTS: '100'
+    CORS_ORIGINS: https://nisdev.portal.gov.gy,https://nisqa.portal.gov.gy,https://customer-agility-7541--nisdev1.sandbox.lightning.force.com,https://customer-agility-7541--nisqa1.sandbox.lightning.force.com,http://localhost:5173,http://localhost:3000
+    DMS_TLS_INSECURE: 'true'
+    DMS_URL: https://mayan.ksquare.local/api/v4
+    DMS_USERNAME: admin
+    PORT: '4000'
+    UPLOAD_MAX_MB: '25'
+  replicas: 2
+  secretKeys:
+    DMS_PASSWORD: the Mayan admin account's password (DMS_USERNAME above)
+  secretName: mayan-node-backend-secrets
+  service:
+    port: 4000
+    type: ClusterIP
+cluster: ksquare-cluster-workload
+environment: dev
+image:
+  repository: ravinadh/mayan-node-backend
+  tag: mayan-node34
+namespace: mayan-edms

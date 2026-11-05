@@ -1,0 +1,19 @@
+{{- include "mnb.checkNamespace" . }}
+# Every non-secret variable the container reads (backend.env and
+# backend.entrypointEnv in deploy/values.<env>.yaml). The Deployment loads it
+# with envFrom, next to the Secret, the way mayan-app loads mayan-config and
+# mayan-secrets.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "mnb.configMapName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "mnb.name" . }}
+data:
+  {{- range $name, $value := .Values.backend.env }}
+  {{ $name }}: {{ $value | toString | quote }}
+  {{- end }}
+  {{- range $name, $value := .Values.backend.entrypointEnv }}
+  {{ $name }}: {{ $value | toString | quote }}
+  {{- end }}

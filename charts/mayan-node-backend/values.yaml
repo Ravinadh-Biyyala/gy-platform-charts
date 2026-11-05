@@ -1,0 +1,41 @@
+backend:
+  containerPort: 4000
+  deployment: mayan-node-backend
+  entrypointEnv: {}
+  env: {}
+  probes:
+    liveness:
+      failureThreshold: 3
+      periodSeconds: 20
+      tcpSocket:
+        port: 4000
+    readiness:
+      failureThreshold: 3
+      httpGet:
+        path: /health
+        port: 4000
+      periodSeconds: 10
+      timeoutSeconds: 5
+    startup:
+      failureThreshold: 60
+      periodSeconds: 5
+      tcpSocket:
+        port: 4000
+  replicas: 1
+  resources:
+    limits:
+      memory: 512Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi
+  secretKeys: {}
+  secretName: mayan-node-backend-secrets
+  service:
+    port: 4000
+    type: ClusterIP
+  terminationGracePeriodSeconds: 30
+image:
+  pullPolicy: IfNotPresent
+  repository: ravinadh/mayan-node-backend
+  tag: latest
+namespace: ''

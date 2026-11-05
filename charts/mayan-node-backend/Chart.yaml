@@ -1,0 +1,8 @@
+name: mayan-node-backend
+version: 0.1.0
+description: The Mayan EDMS-backed document API (upload, list, view, download), deployed
+  beside Mayan itself. Rendered by CI with deploy/values.<env>.yaml and applied with
+  kubectl (.github/workflows/cicd_dev.yml).
+apiVersion: v2
+appVersion: 0.1.0
+type: application
