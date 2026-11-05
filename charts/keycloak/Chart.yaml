@@ -1,0 +1,6 @@
+name: keycloak-uat
+version: 1.0.0
+description: Keycloak UAT deployment using upstream Keycloak and PostgreSQL images
+apiVersion: v2
+appVersion: '26.2'
+type: application

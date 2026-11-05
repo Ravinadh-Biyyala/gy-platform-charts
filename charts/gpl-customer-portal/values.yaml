@@ -1,0 +1,32 @@
+app:
+  containerPort: 8888
+  env:
+    PORT: '8888'
+  name: gpl-customer-portal
+  probes:
+    livenessPath: /health
+    readinessPath: /health/ready
+  replicas: 1
+  resources:
+    limits:
+      memory: 512Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi
+  runAsUser: 1000
+  secretKeys: {}
+  secretName: gpl-customer-portal-secrets
+  service:
+    port: 8888
+    type: ClusterIP
+environment: dev
+image:
+  pullPolicy: IfNotPresent
+  repository: ravinadh/gpl-customer-portal
+  tag: latest
+ingress:
+  className: kommander-traefik
+  enabled: true
+  host: ''
+  path: /
+namespace: react-gpl-portal-dev

@@ -1,0 +1,74 @@
+# Same shape as mayan-node-backend: one `app` label as selector, config loaded
+# whole with envFrom from a ConfigMap and a Secret.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.app.name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Values.app.name }}
+spec:
+  replicas: {{ .Values.app.replicas }}
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: {{ .Values.app.name }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      # The old pod serves until the new one is ready.
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.app.name }}
+      annotations:
+        # envFrom is read only at container start, so a changed ConfigMap
+        # must roll the pods: this checksum changes with it.
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    spec:
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: {{ .Values.app.runAsUser }}
+        runAsGroup: {{ .Values.app.runAsUser }}
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: {{ .Values.app.name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          envFrom:
+            - configMapRef:
+                name: {{ .Values.app.name }}-config
+            - secretRef:
+                name: {{ .Values.app.secretName }}
+          ports:
+            - containerPort: {{ .Values.app.containerPort }}
+              protocol: TCP
+          startupProbe:
+            failureThreshold: 60
+            periodSeconds: 5
+            tcpSocket:
+              port: {{ .Values.app.containerPort }}
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: {{ .Values.app.probes.readinessPath }}
+              port: {{ .Values.app.containerPort }}
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: {{ .Values.app.probes.livenessPath }}
+              port: {{ .Values.app.containerPort }}
+            periodSeconds: 20
+            timeoutSeconds: 5
+          resources:
+            {{- toYaml .Values.app.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]

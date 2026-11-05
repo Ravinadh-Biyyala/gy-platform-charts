@@ -1,0 +1,141 @@
+backend:
+  backup:
+    enabled: true
+    schedule: 0 2 * * *
+  envFromSecret: gdb-backend-env
+  platformAdmin:
+    email: ''
+  scheduler:
+    resources:
+      limits:
+        cpu: 250m
+        memory: 512Mi
+      requests:
+        cpu: 50m
+        memory: 256Mi
+  sites:
+    accessMode: ReadWriteOnce
+    size: 20Gi
+    storageClass: nutanix-volume
+  web:
+    autoscaling:
+      enabled: false
+    replicas: 1
+    resources:
+      limits:
+        cpu: '1'
+        memory: 2Gi
+      requests:
+        cpu: 250m
+        memory: 1Gi
+    startupFailureThreshold: 180
+  worker:
+    autoscaling:
+      enabled: false
+    replicas: 1
+    resources:
+      limits:
+        cpu: 500m
+        memory: 1Gi
+      requests:
+        cpu: 100m
+        memory: 512Mi
+frontend:
+  autoscaling:
+    enabled: false
+  replicas: 1
+  resources:
+    limits:
+      cpu: 250m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+imagePullSecrets: []
+images:
+  backend:
+    repository: ravinadh/gdb
+    tag: uat-backend-v1
+  frontend:
+    repository: ravinadh/gdb
+    tag: uat-frontend-v1
+ingress:
+  className: kommander-traefik
+  clusterIssuer: kommander-ca
+  desk:
+    allowedSourceRanges: []
+    enabled: true
+    host: erp-uat.gdb.gov.gy
+  enabled: true
+  keycloakAdmin:
+    enabled: false
+  portal:
+    host: uat.gdb.gov.gy
+keycloak:
+  autoscaling:
+    enabled: false
+  realmImport:
+    enabled: true
+    subdir: uat
+  replicas: 1
+  resources:
+    limits:
+      cpu: '1'
+      memory: 1536Mi
+    requests:
+      cpu: 250m
+      memory: 768Mi
+mariadb:
+  backup:
+    enabled: false
+  innodbBufferPoolSize: 1G
+  maxConnections: 200
+  operatorNamespace: gdb-uat
+  podDisruptionBudget: {}
+  replicas: 1
+  resources:
+    limits:
+      cpu: '1'
+      memory: 2Gi
+    requests:
+      cpu: 250m
+      memory: 1536Mi
+  storageSize: 20Gi
+networkPolicy:
+  enabled: true
+  ingressNamespace: uat-workload-frm5x-mrxpv
+nodeSelector: {}
+redis:
+  cache:
+    args:
+    - --save
+    - ''
+    - --appendonly
+    - 'no'
+    - --maxmemory
+    - 256mb
+    - --maxmemory-policy
+    - allkeys-lru
+    resources:
+      limits:
+        cpu: 250m
+        memory: 512Mi
+      requests:
+        cpu: 50m
+        memory: 256Mi
+  queue:
+    persistence:
+      enabled: true
+      size: 2Gi
+    resources:
+      limits:
+        cpu: 250m
+        memory: 512Mi
+      requests:
+        cpu: 50m
+        memory: 256Mi
+secrets:
+  mode: existing
+siteName: erp-uat.gdb.gov.gy
+storage:
+  blockClass: nutanix-volume

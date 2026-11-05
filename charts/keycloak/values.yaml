@@ -1,0 +1,39 @@
+ingress:
+  className: kommander-traefik
+  enabled: true
+  host: keycloakuat.portal.gov.gy
+  path: /
+keycloak:
+  admin:
+    existingSecret: keycloak-admin
+    passwordKey: admin-password
+    username: admin
+  database:
+    existingSecret: keycloak-postgresql
+    host: keycloak-postgresql
+    name: keycloak
+    passwordKey: password
+    port: 5432
+    username: keycloak
+  hostname: keycloakuat.portal.gov.gy
+  httpEnabled: true
+  image:
+    pullPolicy: IfNotPresent
+    repository: quay.io/keycloak/keycloak
+    tag: '26.2'
+  proxyHeaders: xforwarded
+  replicaCount: 1
+  service:
+    port: 8080
+postgresql:
+  database: keycloak
+  existingSecret: keycloak-postgresql
+  image:
+    pullPolicy: IfNotPresent
+    repository: postgres
+    tag: '16'
+  passwordKey: password
+  storage:
+    size: 20Gi
+    storageClass: nutanix-volume
+  username: keycloak

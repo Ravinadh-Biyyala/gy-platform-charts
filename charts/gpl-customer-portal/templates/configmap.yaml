@@ -1,0 +1,13 @@
+# Every non-secret variable the container reads (app.env in
+# deploy/values.<env>.yaml). Loaded with envFrom next to the Secret.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.app.name }}-config
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Values.app.name }}
+data:
+  {{- range $k, $v := .Values.app.env }}
+  {{ $k }}: {{ $v | quote }}
+  {{- end }}

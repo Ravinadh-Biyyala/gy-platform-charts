@@ -1,0 +1,234 @@
+backend:
+  allowStaticOtp: false
+  backup:
+    enabled: true
+    resources:
+      limits:
+        cpu: '1'
+        memory: 1Gi
+      requests:
+        cpu: 250m
+        memory: 512Mi
+    schedule: 30 0 * * *
+  envFromSecret: ''
+  extraEnv: []
+  integrations:
+    bankRegistryBaseUrl: ''
+    dcraBaseUrl: ''
+  keycloak:
+    adminClientId: gdb-portal-admin
+    citizenAdminClientId: gdb-citizen-admin
+    citizenClientId: gdb-citizen-portal
+    citizenRealm: gdb-citizen
+    staffClientId: gdb-staff-portal
+    staffRealm: gdb-staff
+    url: ''
+  platformAdmin:
+    email: ''
+    name: GDB Platform Administrator
+  podSecurityContext:
+    fsGroup: 1000
+    fsGroupChangePolicy: OnRootMismatch
+  portalUrl: ''
+  scheduler:
+    enabled: true
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 256Mi
+  sites:
+    accessMode: ReadWriteMany
+    existingClaim: ''
+    size: 100Gi
+    storageClass: ''
+  staticOtp: ''
+  web:
+    autoscaling:
+      enabled: true
+      maxReplicas: 6
+      minReplicas: 2
+      targetCPUUtilizationPercentage: 70
+      targetMemoryUtilizationPercentage: 80
+    command: []
+    replicas: 2
+    resources:
+      limits:
+        cpu: '2'
+        memory: 4Gi
+      requests:
+        cpu: '1'
+        memory: 2Gi
+    startupFailureThreshold: 180
+  worker:
+    autoscaling:
+      enabled: true
+      maxReplicas: 6
+      minReplicas: 2
+      targetCPUUtilizationPercentage: 70
+    queues: short,default,long
+    replicas: 2
+    resources:
+      limits:
+        cpu: '1'
+        memory: 2Gi
+      requests:
+        cpu: 500m
+        memory: 1Gi
+clusterDomain: cluster.local
+frontend:
+  autoscaling:
+    enabled: true
+    maxReplicas: 4
+    minReplicas: 2
+    targetCPUUtilizationPercentage: 70
+  replicas: 2
+  resolver: ''
+  resources:
+    limits:
+      cpu: 500m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+imagePullSecrets: []
+images:
+  backend:
+    pullPolicy: IfNotPresent
+    repository: ravinadh/gdb-backend
+    tag: ''
+  frontend:
+    pullPolicy: IfNotPresent
+    repository: ravinadh/gdb-frontend
+    tag: ''
+  keycloak:
+    pullPolicy: IfNotPresent
+    repository: ravinadh/gdb-keycloak
+    tag: '26.0'
+  redis:
+    pullPolicy: IfNotPresent
+    repository: ravinadh/gdb-redis
+    tag: 7.2-alpine
+ingress:
+  annotations: {}
+  className: kommander-traefik
+  clusterIssuer: ''
+  desk:
+    allowedSourceRanges: []
+    enabled: true
+    host: ''
+    tlsSecretName: gdb-desk-tls
+  enabled: true
+  entrypoint: websecure
+  keycloakAdmin:
+    allowedSourceRanges: []
+    enabled: false
+    host: ''
+    tlsSecretName: gdb-keycloak-tls
+  portal:
+    host: ''
+    tlsSecretName: gdb-portal-tls
+keycloak:
+  adminUser: admin
+  autoscaling:
+    enabled: true
+    maxReplicas: 3
+    minReplicas: 2
+    targetCPUUtilizationPercentage: 75
+  database:
+    name: keycloak
+    user: keycloak
+  enabled: true
+  hostname: ''
+  javaOptsAppend: -XX:MaxRAMPercentage=70
+  realmImport:
+    enabled: true
+    subdir: ''
+  replicas: 2
+  resources:
+    limits:
+      cpu: '1'
+      memory: 2Gi
+    requests:
+      cpu: 500m
+      memory: 1536Mi
+mariadb:
+  backup:
+    enabled: false
+    maxRetention: 720h
+    schedule: 0 1 * * *
+    storage: {}
+  enabled: true
+  image: ravinadh/gdb-mariadb:11.8
+  innodbBufferPoolSize: 5G
+  maxConnections: 500
+  operatorNamespace: mariadb-operator
+  podDisruptionBudget:
+    maxUnavailable: 1
+  replicas: 3
+  resources:
+    limits:
+      cpu: '3'
+      memory: 10Gi
+    requests:
+      cpu: 1500m
+      memory: 8Gi
+  storageSize: 200Gi
+nameOverride: ''
+networkPolicy:
+  enabled: true
+  ingressNamespace: kommander
+nodeSelector: {}
+redis:
+  cache:
+    args:
+    - --save
+    - ''
+    - --appendonly
+    - 'no'
+    - --maxmemory
+    - 768mb
+    - --maxmemory-policy
+    - allkeys-lru
+    persistence:
+      enabled: false
+      size: 1Gi
+    resources:
+      limits:
+        cpu: 500m
+        memory: 1536Mi
+      requests:
+        cpu: 250m
+        memory: 1Gi
+  queue:
+    args:
+    - --appendonly
+    - 'yes'
+    - --save
+    - ''
+    persistence:
+      enabled: true
+      size: 10Gi
+    resources:
+      limits:
+        cpu: 500m
+        memory: 1536Mi
+      requests:
+        cpu: 250m
+        memory: 1Gi
+secrets:
+  external:
+    apiVersion: external-secrets.io/v1
+    refreshInterval: 1h
+    remoteKey: ''
+    storeKind: ClusterSecretStore
+    storeName: ''
+  mode: existing
+  name: ''
+  values: {}
+siteName: ''
+storage:
+  blockClass: nutanix-volume-retain
+tolerations: []

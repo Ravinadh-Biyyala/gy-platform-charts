@@ -1,0 +1,34 @@
+app:
+  env:
+    API_ROOT: api
+    DB_DIALECT: postgres
+    DB_HOST: 10.60.1.81
+    DB_NAME: keycloak
+    DB_PORT: '5432'
+    KEYCLOAK_ACCESS_TOKEN_TYPE: claim:Bearer
+    KEYCLOAK_ALLOWED_ALGORITHMS: RS256
+    KEYCLOAK_AUDIENCE: gpl-portal-backend
+    KEYCLOAK_CLOCK_TOLERANCE_SECONDS: '60'
+    KEYCLOAK_ISSUER: https://keycloakdev.portal.gov.gy/realms/Guyana-Citizen-dev
+    KEYCLOAK_JWKS_URI: https://keycloakdev.portal.gov.gy/realms/Guyana-Citizen-dev/protocol/openid-connect/certs
+    KEYCLOAK_REQUIRED_ROLE: portal-customer
+    KEYCLOAK_ROLE_CLIENT_ID: gpl-portal-backend
+    LOG_LEVEL: info
+    PORT: '8888'
+    SPA_KEYCLOAK_CLIENT_ID: gpl-portal
+    SPA_KEYCLOAK_REALM: Guyana-Citizen-dev
+    SPA_KEYCLOAK_URL: https://keycloakdev.portal.gov.gy
+    SPA_MOCKS_ENABLED: 'true'
+    SPA_MOCK_SSO_DATA_PROFILE: rennica.b@example.gy
+    TYPEORM_SYNCHRONIZE: 'false'
+  replicas: 1
+  secretKeys:
+    DB_PASSWORD: DEV PostgreSQL password (from Raul, privately)
+    DB_USER: DEV PostgreSQL user (from Raul, privately)
+environment: dev
+image:
+  tag: portal-dev6
+ingress:
+  enabled: true
+  host: gpldev.portal.gov.gy
+namespace: react-gpl-portal-dev

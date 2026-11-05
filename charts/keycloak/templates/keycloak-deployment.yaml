@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.keycloak.replicaCount }}
+
+  selector:
+    matchLabels:
+      app: keycloak
+
+  template:
+    metadata:
+      labels:
+        app: keycloak
+
+    spec:
+      containers:
+        - name: keycloak
+
+          image: "{{ .Values.keycloak.image.repository }}:{{ .Values.keycloak.image.tag }}"
+          imagePullPolicy: {{ .Values.keycloak.image.pullPolicy }}
+
+          args:
+            - start
+
+          ports:
+            - name: http
+              containerPort: 8080
+
+          env:
+            - name: KC_BOOTSTRAP_ADMIN_USERNAME
+              value: {{ .Values.keycloak.admin.username | quote }}
+
+            - name: KC_BOOTSTRAP_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.keycloak.admin.existingSecret }}
+                  key: {{ .Values.keycloak.admin.passwordKey }}
+
+            - name: KC_DB
+              value: postgres
+
+            - name: KC_DB_URL
+              value: "jdbc:postgresql://{{ .Values.keycloak.database.host }}:{{ .Values.keycloak.database.port }}/{{ .Values.keycloak.database.name }}"
+
+            - name: KC_DB_USERNAME
+              value: {{ .Values.keycloak.database.username | quote }}
+
+            - name: KC_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.keycloak.database.existingSecret }}
+                  key: {{ .Values.keycloak.database.passwordKey }}
+
+            - name: KC_HTTP_ENABLED
+              value: {{ .Values.keycloak.httpEnabled | quote }}
+
+            - name: KC_PROXY_HEADERS
+              value: {{ .Values.keycloak.proxyHeaders | quote }}
+
+            - name: KC_HOSTNAME
+              value: {{ .Values.keycloak.hostname | quote }}
+
+            - name: KC_HOSTNAME_STRICT
+              value: "false"
+
+          readinessProbe:
+            httpGet:
+              path: /realms/master
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 12
+
+          livenessProbe:
+            httpGet:
+              path: /realms/master
+              port: 8080
+            initialDelaySeconds: 120
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 6

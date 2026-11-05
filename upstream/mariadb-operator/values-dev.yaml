@@ -1,0 +1,4 @@
+currentNamespaceOnly: true
+image:
+  repository: ravinadh/gdb-mariadb-operator
+  tag: 26.10.1

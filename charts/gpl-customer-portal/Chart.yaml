@@ -1,0 +1,6 @@
+name: gpl-customer-portal
+version: 0.1.0
+description: GPL customer portal (NestJS backend serving the React SPA)
+apiVersion: v2
+appVersion: 0.1.0
+type: application

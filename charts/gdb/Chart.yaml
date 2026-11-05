@@ -1,0 +1,14 @@
+name: gdb-los
+version: 0.1.0
+description: Guyana Development Bank Loan Origination System - ERPNext v16 + frappe/lending
+  backend, React citizen portal, Keycloak, MariaDB (via mariadb-operator) and Redis.
+keywords:
+- erpnext
+- frappe
+- lending
+- keycloak
+- mariadb
+apiVersion: v2
+appVersion: erpnext-v16
+kubeVersion: '>=1.27.0-0'
+type: application
