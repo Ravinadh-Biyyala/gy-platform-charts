@@ -1,0 +1,10 @@
+# Not part of the packaged chart
+.recovered/
+values-*.yaml
+rendered*.yaml
+*.tgz
+.git/
+.DS_Store
+*.swp
+*.bak
+*.orig
