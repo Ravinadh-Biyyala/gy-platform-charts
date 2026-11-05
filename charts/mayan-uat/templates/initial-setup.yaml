@@ -1,0 +1,59 @@
+{{- if .Values.initialSetup.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mayan-initial-setup
+  namespace: {{ .Values.namespace }}
+spec:
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        app: mayan-initial-setup
+    spec:
+      restartPolicy: OnFailure
+      nodeSelector:
+{{ toYaml .Values.nodeSelector | indent 8 }}
+      initContainers:
+        - name: wait-for-services
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z mayan-postgres 5432; do
+                echo "Waiting for PostgreSQL..."
+                sleep 5
+              done
+
+              until nc -z mayan-rabbitmq 5672; do
+                echo "Waiting for RabbitMQ..."
+                sleep 5
+              done
+
+              until nc -z mayan-redis 6379; do
+                echo "Waiting for Redis..."
+                sleep 5
+              done
+
+              echo "All services are ready."
+      containers:
+        - name: initial-setup
+          image: "{{ .Values.mayan.image.repository }}:{{ .Values.mayan.image.tag }}"
+          imagePullPolicy: {{ .Values.mayan.image.pullPolicy }}
+          command:
+            - /opt/mayan-edms/bin/mayan-edms.py
+            - initialsetup
+          envFrom:
+            - configMapRef:
+                name: mayan-config
+            - secretRef:
+                name: mayan-secrets
+          volumeMounts:
+            - name: media
+              mountPath: /var/lib/mayan
+      volumes:
+        - name: media
+          persistentVolumeClaim:
+            claimName: mayan-media
+{{- end }}

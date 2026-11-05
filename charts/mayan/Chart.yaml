@@ -1,0 +1,8 @@
+{
+  "name": "mayan-edms",
+  "version": "0.1.0",
+  "description": "Mayan EDMS on Nutanix NKP",
+  "apiVersion": "v2",
+  "appVersion": "CHANGE-ME",
+  "type": "application"
+}

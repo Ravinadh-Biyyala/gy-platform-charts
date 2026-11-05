@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mayan-beat
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: mayan-beat
+  template:
+    metadata:
+      labels:
+        app: mayan-beat
+    spec:
+      nodeSelector:
+{{ toYaml .Values.nodeSelector | indent 8 }}
+      containers:
+        - name: mayan-beat
+          image: "{{ .Values.mayan.image.repository }}:{{ .Values.mayan.image.tag }}"
+          imagePullPolicy: {{ .Values.mayan.image.pullPolicy }}
+          envFrom:
+            - configMapRef:
+                name: mayan-config
+            - secretRef:
+                name: mayan-secrets
+          volumeMounts:
+            - name: media
+              mountPath: /var/lib/mayan
+      volumes:
+        - name: media
+          persistentVolumeClaim:
+            claimName: mayan-media

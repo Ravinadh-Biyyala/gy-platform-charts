@@ -1,0 +1,340 @@
+# ============================================================
+# PostgreSQL Secret
+# ============================================================
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: embrace-postgres
+type: Opaque
+stringData:
+  POSTGRES_USER: {{ .Values.postgres.username | quote }}
+  POSTGRES_PASSWORD: {{ .Values.postgres.password | quote }}
+  POSTGRES_DB: {{ .Values.postgres.database | quote }}
+
+---
+
+# ============================================================
+# PostgreSQL StatefulSet
+# 1 Pod + 50Gi Nutanix PVC
+# ============================================================
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: embrace-postgres
+spec:
+  serviceName: embrace-postgres
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: embrace-postgres
+
+  template:
+    metadata:
+      labels:
+        app: embrace-postgres
+
+    spec:
+      containers:
+        - name: postgres
+
+          image: "{{ .Values.postgres.image.repository }}:{{ .Values.postgres.image.tag }}"
+
+          ports:
+            - name: postgres
+              containerPort: 5432
+
+          envFrom:
+            - secretRef:
+                name: embrace-postgres
+
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-data
+
+      spec:
+        accessModes:
+          - ReadWriteOnce
+
+        storageClassName: {{ .Values.postgres.storage.storageClass | quote }}
+
+        resources:
+          requests:
+            storage: {{ .Values.postgres.storage.size }}
+
+---
+
+# ============================================================
+# PostgreSQL Service
+# Internal only
+# ============================================================
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: embrace-postgres
+
+spec:
+  type: ClusterIP
+
+  selector:
+    app: embrace-postgres
+
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432
+
+---
+
+# ============================================================
+# API Deployment
+# 2 Pods
+# ============================================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: embrace-api
+
+spec:
+  replicas: {{ .Values.api.replicaCount }}
+
+  selector:
+    matchLabels:
+      app: embrace-api
+
+  template:
+    metadata:
+      labels:
+        app: embrace-api
+
+    spec:
+      containers:
+
+        - name: api
+
+          image: "{{ .Values.api.image.repository }}:{{ .Values.api.image.tag }}"
+
+          imagePullPolicy: {{ .Values.api.image.pullPolicy }}
+
+          ports:
+            - name: http
+              containerPort: {{ .Values.api.port }}
+
+          env:
+
+            - name: NODE_ENV
+              value: "production"
+
+            - name: PORT
+              value: "8080"
+
+            # Direct Kubernetes PostgreSQL connection
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: embrace-postgres
+                  key: POSTGRES_PASSWORD
+
+            - name: DATABASE_URL
+              value: "postgres://{{ .Values.postgres.username }}:$(POSTGRES_PASSWORD)@embrace-postgres:5432/{{ .Values.postgres.database }}"
+
+          # Override Dockerfile CMD.
+          # The Dockerfile normally starts with-db-tunnel.mjs.
+          # Kubernetes PostgreSQL is internal, so connect directly.
+
+          command:
+            - node
+
+          args:
+            - "--enable-source-maps"
+            - "./dist/index.mjs"
+
+          readinessProbe:
+            httpGet:
+              path: /api/healthz
+              port: http
+            initialDelaySeconds: 45
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+
+          livenessProbe:
+            httpGet:
+              path: /api/healthz
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 5
+
+---
+
+# ============================================================
+# API Service
+# Internal only
+# ============================================================
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: embrace-api
+
+spec:
+  type: ClusterIP
+
+  selector:
+    app: embrace-api
+
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+
+---
+
+# ============================================================
+# WEB / NGINX Deployment
+# 2 Pods
+# ============================================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: embrace-web
+
+spec:
+  replicas: {{ .Values.web.replicaCount }}
+
+  selector:
+    matchLabels:
+      app: embrace-web
+
+  template:
+    metadata:
+      labels:
+        app: embrace-web
+
+    spec:
+      containers:
+
+        - name: web
+
+          image: "{{ .Values.web.image.repository }}:{{ .Values.web.image.tag }}"
+
+          imagePullPolicy: {{ .Values.web.image.pullPolicy }}
+
+          ports:
+            - name: http
+              containerPort: 80
+
+          # NGINX -> Kubernetes API Service
+          env:
+
+            - name: API_UPSTREAM
+              value: "embrace-api:8080"
+
+            - name: CLIENT_MAX_BODY_SIZE
+              value: "25m"
+
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 5
+
+---
+
+# ============================================================
+# WEB / NGINX Service
+# ============================================================
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: embrace-web
+
+spec:
+  type: ClusterIP
+
+  selector:
+    app: embrace-web
+
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+
+---
+
+# ============================================================
+# INGRESS
+# Existing Traefik is used.
+# Existing MetalLB is used by Traefik.
+#
+# DNS:
+# embrace.mhsss.gov.gy
+# ============================================================
+
+{{- if .Values.ingress.enabled }}
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: embrace
+
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+
+  rules:
+    - host: {{ .Values.ingress.host }}
+
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+
+            backend:
+              service:
+                name: embrace-web
+                port:
+                  number: 80
+
+{{- if .Values.ingress.tls.enabled }}
+
+  tls:
+    - hosts:
+        - {{ .Values.ingress.host }}
+
+      secretName: {{ .Values.ingress.tls.secretName }}
+
+{{- end }}
+
+{{- end }}

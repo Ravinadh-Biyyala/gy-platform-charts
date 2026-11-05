@@ -1,0 +1,54 @@
+{
+  "ingress": {
+    "className": "traefik",
+    "enabled": true,
+    "tls": {
+      "enabled": true,
+      "secretName": "mayan-tls"
+    }
+  },
+  "initialSetup": {
+    "command": [
+      "mayan-edms.py",
+      "initialsetup"
+    ],
+    "enabled": true
+  },
+  "mayan": {
+    "host": "mayan.ksquare.local",
+    "image": {
+      "pullPolicy": "IfNotPresent",
+      "repository": "mayanedms/mayanedms",
+      "tag": "v4.11.5"
+    },
+    "replicas": 1
+  },
+  "media": {
+    "storage": "50Gi",
+    "storageClass": "nutanix-volume"
+  },
+  "networkPolicy": {
+    "enabled": true
+  },
+  "postgres": {
+    "image": "postgres:15",
+    "storage": "50Gi",
+    "storageClass": "nutanix-volume"
+  },
+  "rabbitmq": {
+    "image": "rabbitmq:3.13-management",
+    "storage": "25Gi",
+    "storageClass": "nutanix-volume"
+  },
+  "redis": {
+    "image": "redis:7-alpine"
+  },
+  "secrets": {
+    "djangoSecretKey": "",
+    "postgresPassword": "",
+    "rabbitmqPassword": ""
+  },
+  "traefik": {
+    "namespace": "kommander"
+  }
+}

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mayan-config
+  namespace: {{ .Values.namespace }}
+data:
+  MAYAN_ALLOWED_HOSTS: "{{ .Values.mayan.host }}"
+  MAYAN_CSRF_TRUSTED_ORIGINS: '["https://{{ .Values.mayan.host }}"]'
+  MAYAN_CELERY_RESULT_BACKEND: "redis://mayan-redis:6379/1"
+  MAYAN_LOCK_MANAGER_BACKEND: "mayan.apps.lock_manager.backends.redis_lock.RedisLock"
+  MAYAN_LOCK_MANAGER_BACKEND_ARGUMENTS: "{'redis_url':'redis://mayan-redis:6379/2'}"

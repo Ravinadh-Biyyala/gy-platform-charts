@@ -1,0 +1,42 @@
+{
+  "api": {
+    "image": {
+      "pullPolicy": "IfNotPresent",
+      "repository": "ravinadh/embrace-api",
+      "tag": "1.0.0"
+    },
+    "port": 8080,
+    "replicaCount": 2
+  },
+  "ingress": {
+    "className": "kommander-traefik",
+    "enabled": true,
+    "host": "embrace.mhsss.gov.gy",
+    "tls": {
+      "enabled": false,
+      "secretName": "embrace-tls"
+    }
+  },
+  "postgres": {
+    "database": "embrace_db",
+    "image": {
+      "repository": "postgres",
+      "tag": "16"
+    },
+    "password": "",
+    "storage": {
+      "size": "50Gi",
+      "storageClass": "nutanix-volume"
+    },
+    "username": "embraceapp"
+  },
+  "web": {
+    "image": {
+      "pullPolicy": "IfNotPresent",
+      "repository": "ravinadh/embrace-web",
+      "tag": "1.0.0"
+    },
+    "port": 80,
+    "replicaCount": 2
+  }
+}

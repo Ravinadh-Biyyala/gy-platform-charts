@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mayan-media
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: {{ .Values.media.storageClass | quote }}
+  resources:
+    requests:
+      storage: {{ .Values.media.storage }}

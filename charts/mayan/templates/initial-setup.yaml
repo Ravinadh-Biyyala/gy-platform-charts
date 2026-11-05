@@ -1,0 +1,28 @@
+{{- if .Values.initialSetup.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mayan-initial-setup
+spec:
+  backoffLimit: 2
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: initial-setup
+          image: "{{ .Values.mayan.image.repository }}:{{ .Values.mayan.image.tag }}"
+          command:
+{{ toYaml .Values.initialSetup.command | indent 12 }}
+          envFrom:
+            - configMapRef:
+                name: mayan-config
+            - secretRef:
+                name: mayan-secrets
+          volumeMounts:
+            - name: media
+              mountPath: /var/lib/mayan
+      volumes:
+        - name: media
+          persistentVolumeClaim:
+            claimName: mayan-media
+{{- end }}

@@ -1,5 +1,2 @@
 .recovered/
-# TEMPORARY: contain plaintext secrets, remove these lines once moved to existingSecret
-charts/mayan/
-charts/embrace/
 inventory.txt

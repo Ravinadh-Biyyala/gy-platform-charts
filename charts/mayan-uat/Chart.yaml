@@ -1,0 +1,8 @@
+{
+  "name": "mayan-uat",
+  "version": "0.1.0",
+  "description": "Mayan EDMS UAT deployment",
+  "apiVersion": "v2",
+  "appVersion": "4.11.5",
+  "type": "application"
+}

@@ -1,0 +1,59 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mayan-app
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    app: mayan-app
+  ports:
+    - port: 8000
+      targetPort: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mayan-app
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.mayan.replicas }}
+  selector:
+    matchLabels:
+      app: mayan-app
+  template:
+    metadata:
+      labels:
+        app: mayan-app
+    spec:
+      nodeSelector:
+{{ toYaml .Values.nodeSelector | indent 8 }}
+      containers:
+        - name: mayan-app
+          image: "{{ .Values.mayan.image.repository }}:{{ .Values.mayan.image.tag }}"
+          imagePullPolicy: {{ .Values.mayan.image.pullPolicy }}
+          envFrom:
+            - configMapRef:
+                name: mayan-config
+            - secretRef:
+                name: mayan-secrets
+          ports:
+            - containerPort: 8000
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8000
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8000
+            initialDelaySeconds: 40
+            periodSeconds: 20
+          volumeMounts:
+            - name: media
+              mountPath: /var/lib/mayan
+      volumes:
+        - name: media
+          persistentVolumeClaim:
+            claimName: mayan-media

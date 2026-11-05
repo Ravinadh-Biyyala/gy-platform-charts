@@ -1,0 +1,43 @@
+{
+  "ingress": {
+    "enabled": false
+  },
+  "initialSetup": {
+    "enabled": true
+  },
+  "mayan": {
+    "host": "esbuat.services.gov.gy",
+    "image": {
+      "pullPolicy": "IfNotPresent",
+      "repository": "mayanedms/mayanedms",
+      "tag": "v4.11.5"
+    },
+    "replicas": 1
+  },
+  "media": {
+    "storage": "200Gi",
+    "storageClass": "nutanix-volume"
+  },
+  "namespace": "mayan-edms",
+  "nodeSelector": {
+    "mayan-media-node": "true"
+  },
+  "postgres": {
+    "image": "postgres:15",
+    "storage": "50Gi",
+    "storageClass": "nutanix-volume"
+  },
+  "rabbitmq": {
+    "image": "rabbitmq:3.13-management",
+    "storage": "50Gi",
+    "storageClass": "nutanix-volume"
+  },
+  "redis": {
+    "image": "redis:7-alpine"
+  },
+  "secrets": {
+    "djangoSecretKey": "",
+    "postgresPassword": "",
+    "rabbitmqPassword": ""
+  }
+}
