@@ -1,0 +1,17 @@
+{{- range $name, $o := .Values.deployments }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  {{- with $o.labels }}
+  labels:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with $o.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- toYaml $o.spec | nindent 2 }}
+{{- end }}

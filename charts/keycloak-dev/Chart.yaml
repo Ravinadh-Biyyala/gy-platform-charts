@@ -1,0 +1,6 @@
+apiVersion: v2
+name: keycloak-dev
+description: 'Keycloak for DEV (start-dev mode) - DB: postgres-dev chart; admin/DB credentials from Secret keycloak-dev-credentials'
+type: application
+version: 0.1.0
+appVersion: 1.0.0

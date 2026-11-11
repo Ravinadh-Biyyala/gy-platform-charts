@@ -1,0 +1,6 @@
+apiVersion: v2
+name: postgres-dev
+description: Postgres 16 in namespace postgres on DEV - used by keycloak-dev (and exposed via MetalLB LoadBalancer)
+type: application
+version: 0.1.0
+appVersion: 1.0.0
