@@ -1,0 +1,277 @@
+# nis - DEV: namespace react-nis-dev on the DEV cluster
+# Recovered from the live namespace; reproduces it exactly (verify with kubectl diff).
+# Secrets are NOT here - the pods read existing Secrets by name.
+configMaps:
+  nis-backend-config:
+    labels:
+      app: nis-backend
+    data:
+      API_DOCS_ENABLED: 'false'
+      BASE_PATHS: /app/v1,/api/v1
+      CORS_ORIGINS: https://nisdev.portal.gov.gy
+      DB_SCHEMA: public
+      JSON_BODY_LIMIT: 10mb
+      KC_AUDIENCE: ''
+      KC_CLIENT_ID: nis-portal
+      KC_ISSUER: ''
+      KC_REALM: nis-dev
+      KC_URL: https://keycloakdev.portal.gov.gy
+      LOG_FORMAT: json
+      LOG_LEVEL: info
+      PG_IDLE_TIMEOUT_MS: '30000'
+      PG_POOL_MAX: '10'
+      PORT: '8081'
+      RATE_LIMIT_MAX: '300'
+      RATE_LIMIT_WINDOW_MS: '60000'
+deployments:
+  nis-backend:
+    labels:
+      app: nis-backend
+    spec:
+      progressDeadlineSeconds: 600
+      replicas: 2
+      revisionHistoryLimit: 10
+      selector:
+        matchLabels:
+          app: nis-backend
+      strategy:
+        rollingUpdate:
+          maxSurge: 25%
+          maxUnavailable: 25%
+        type: RollingUpdate
+      template:
+        metadata:
+          labels:
+            app: nis-backend
+        spec:
+          containers:
+            - envFrom:
+                - configMapRef:
+                    name: nis-backend-config
+                - secretRef:
+                    name: nis-backend-secrets
+              image: ravinadh/ksquarenis:nis-backend-v3
+              imagePullPolicy: Always
+              livenessProbe:
+                failureThreshold: 3
+                httpGet:
+                  path: /health
+                  port: 8081
+                  scheme: HTTP
+                periodSeconds: 30
+                successThreshold: 1
+                timeoutSeconds: 5
+              name: nis-backend
+              ports:
+                - containerPort: 8081
+                  name: http
+                  protocol: TCP
+              readinessProbe:
+                failureThreshold: 3
+                httpGet:
+                  path: /health
+                  port: 8081
+                  scheme: HTTP
+                periodSeconds: 10
+                successThreshold: 1
+                timeoutSeconds: 5
+              resources:
+                limits:
+                  cpu: 500m
+                  memory: 512Mi
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                runAsNonRoot: true
+                runAsUser: 1000
+              startupProbe:
+                failureThreshold: 36
+                httpGet:
+                  path: /health
+                  port: 8081
+                  scheme: HTTP
+                periodSeconds: 5
+                successThreshold: 1
+                timeoutSeconds: 1
+              terminationMessagePath: /dev/termination-log
+              terminationMessagePolicy: File
+          dnsPolicy: ClusterFirst
+          restartPolicy: Always
+          schedulerName: default-scheduler
+          securityContext: {}
+          terminationGracePeriodSeconds: 30
+  react-test:
+    spec:
+      progressDeadlineSeconds: 600
+      replicas: 2
+      revisionHistoryLimit: 10
+      selector:
+        matchLabels:
+          app: react-test
+      strategy:
+        rollingUpdate:
+          maxSurge: 25%
+          maxUnavailable: 25%
+        type: RollingUpdate
+      template:
+        metadata:
+          labels:
+            app: react-test
+        spec:
+          containers:
+            - image: ravinadh/ksquarenis:v147
+              imagePullPolicy: Always
+              livenessProbe:
+                failureThreshold: 3
+                httpGet:
+                  path: /
+                  port: 3000
+                  scheme: HTTP
+                initialDelaySeconds: 30
+                periodSeconds: 20
+                successThreshold: 1
+                timeoutSeconds: 1
+              name: react-test
+              ports:
+                - containerPort: 3000
+                  protocol: TCP
+              readinessProbe:
+                failureThreshold: 3
+                httpGet:
+                  path: /
+                  port: 3000
+                  scheme: HTTP
+                initialDelaySeconds: 10
+                periodSeconds: 10
+                successThreshold: 1
+                timeoutSeconds: 1
+              resources:
+                limits:
+                  cpu: 500m
+                  memory: 512Mi
+                requests:
+                  cpu: 250m
+                  memory: 256Mi
+              terminationMessagePath: /dev/termination-log
+              terminationMessagePolicy: File
+          dnsPolicy: ClusterFirst
+          restartPolicy: Always
+          schedulerName: default-scheduler
+          securityContext: {}
+          terminationGracePeriodSeconds: 30
+ingresses:
+  mulesoft-proxy:
+    annotations:
+      traefik.ingress.kubernetes.io/router.middlewares: react-nis-dev-strip-mule-prefix@kubernetescrd
+      traefik.ingress.kubernetes.io/service.serversscheme: https
+    spec:
+      ingressClassName: kommander-traefik
+      rules:
+        - host: nisdev.portal.gov.gy
+          http:
+            paths:
+              - backend:
+                  service:
+                    name: mulesoft-external
+                    port:
+                      number: 8443
+                path: /api/mule
+                pathType: Prefix
+      tls:
+        - hosts:
+            - nisdev.portal.gov.gy
+  react-test-ingress:
+    spec:
+      ingressClassName: kommander-traefik
+      rules:
+        - host: nisdev.portal.gov.gy
+          http:
+            paths:
+              - backend:
+                  service:
+                    name: react-test-service
+                    port:
+                      number: 80
+                path: /
+                pathType: Prefix
+middlewares:
+  strip-mule-prefix:
+    spec:
+      stripPrefix:
+        prefixes:
+          - /api/mule
+networkPolicies:
+  allow-traefik-to-react-test:
+    spec:
+      ingress:
+        - from:
+            - namespaceSelector:
+                matchLabels:
+                  kubernetes.io/metadata.name: nutanix-k-square-csknr-n8vl6
+              podSelector:
+                matchLabels:
+                  app: traefik
+          ports:
+            - port: 3000
+              protocol: TCP
+      podSelector:
+        matchLabels:
+          app: react-test
+      policyTypes:
+        - Ingress
+services:
+  mulesoft-external:
+    spec:
+      internalTrafficPolicy: Cluster
+      ipFamilies:
+        - IPv4
+      ipFamilyPolicy: SingleStack
+      ports:
+        - port: 8443
+          protocol: TCP
+          targetPort: 8443
+      sessionAffinity: None
+      type: ClusterIP
+  nis-backend-service:
+    labels:
+      app: nis-backend
+    spec:
+      internalTrafficPolicy: Cluster
+      ipFamilies:
+        - IPv4
+      ipFamilyPolicy: SingleStack
+      ports:
+        - name: http
+          port: 8081
+          protocol: TCP
+          targetPort: 8081
+      selector:
+        app: nis-backend
+      sessionAffinity: None
+      type: ClusterIP
+  react-test-service:
+    spec:
+      internalTrafficPolicy: Cluster
+      ipFamilies:
+        - IPv4
+      ipFamilyPolicy: SingleStack
+      ports:
+        - name: http
+          port: 80
+          protocol: TCP
+          targetPort: 3000
+      selector:
+        app: react-test
+      sessionAffinity: None
+      type: ClusterIP
+# Manual endpoints for the selector-less Service mulesoft-external (traffic to MuleSoft outside the cluster)
+endpoints:
+  mulesoft-external:
+    subsets:
+    - addresses:
+      - ip: 10.60.3.10
+      ports:
+      - port: 8443
+        protocol: TCP

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: mps
+description: 'MPS portal: frontend (mps), backend, citizen frontend + backend; UAT also runs its own Postgres'
+type: application
+version: 0.1.0
+appVersion: 1.0.0

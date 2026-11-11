@@ -1,0 +1,10 @@
+# Base values. Everything environment-specific is in values-<env>.yaml.
+# Use: helm upgrade --install <release> . -n <namespace> -f values-<env>.yaml
+configMaps: {}
+deployments: {}
+ingresses: {}
+middlewares: {}
+networkPolicies: {}
+persistentVolumeClaims: {}
+services: {}
+endpoints: {}

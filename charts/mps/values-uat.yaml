@@ -1,0 +1,647 @@
+# mps - UAT: namespace react-mps-uat on the UAT cluster
+# Recovered from the live namespace; reproduces it exactly (verify with kubectl diff).
+# Secrets are NOT here - the pods read existing Secrets by name.
+# Not managed here: persistentvolumeclaim-postgres-data-mps-postgres-0, persistentvolumeclaim-postgres-data-mps-postgres-test-0
+configMaps:
+  mps-backend-secret:
+    data:
+      API_DOCS_ENABLED: 'false'
+      BASE_PATH: /api
+      CACHE_ACCOUNTS_TTL_SECONDS: '30'
+      CACHE_LISTS_TTL_SECONDS: '60'
+      CACHE_REFERENCE_TTL_SECONDS: '600'
+      CORS_ORIGINS: https://mpsuat.portal.gov.gy
+      COVER_SYNC_SECONDS: '60'
+      DMS_ENSURE_TIMEOUT: '360'
+      DMS_PREFIX: mps_
+      DMS_ROOT_CABINET: mps
+      DMS_TLS_INSECURE: 'true'
+      DMS_URL: https://mayanuat.services.gov.gy/api/v4
+      DMS_USERNAME: admin
+      EID_API_URL: https://api.e-id.gov.gy/ASRIDExternalAPI
+      EID_CLIENT_ID: '3'
+      EXPIRY_SWEEP_HOURS: '6'
+      JSON_BODY_LIMIT: 10mb
+      KC_CLIENT_ID: mps-portal
+      KC_ISSUER: ''
+      KC_REALM: Guyana-Gov
+      KC_URL: https://keycloakuat.portal.gov.gy
+      LOG_FORMAT: json
+      LOG_LEVEL: info
+      MAIL_ENABLED: 'true'
+      MAIL_FROM: MPSGEI Workforce Portal <no-reply@mps.gov.gy>
+      MAIL_MAX_PER_MINUTE: '10'
+      MAIL_POLL_MINUTES: '2'
+      MAIL_REPLY_TO: ''
+      MAIL_TIMEOUT_MS: '10000'
+      MFA_ENROL_SMS_TEMPLATE: 'MPS Portal: register this phone for sign-in approval:
+
+        {link}
+
+        Not you? Tell IT.'
+      MFA_REQUIRE_MOBILE: 'true'
+      MFA_SMS_TEMPLATE: 'MPS Portal: approve sign-in (3 min, one use):
+
+        {link}
+
+        Not you? Ignore.'
+      PASSWORD_INVITE_TTL_HOURS: '72'
+      PG_IDLE_TIMEOUT_MS: '30000'
+      PG_POOL_MAX: '10'
+      PORT: '8081'
+      PORTAL_PUBLIC_URL: https://mpsuat.portal.gov.gy
+      RATE_LIMIT_MAX: '300'
+      RATE_LIMIT_WINDOW_MS: '60000'
+      REDIS_URL: ''
+      SMS_ENABLED: 'true'
+      SMS_GATEWAY_URL: https://peddel.api.infobip.com
+      SMS_TIMEOUT_MS: '8000'
+      SMTP_HOST: webmail.egov.gy
+      SMTP_PORT: '465'
+      SMTP_SECURE: 'true'
+      SMTP_USER: no-reply@mps.gov.gy
+      UPLOAD_MAX_MB: '25'
+  mps-citizen-backend-config:
+    labels:
+      app: mps-citizen-backend
+    data:
+      API_DOCS_ENABLED: 'false'
+      APP_NAME: MPS Citizen Portal
+      APP_PUBLIC_URL: https://mpsuat.portal.gov.gy/citizen
+      CORS_ORIGINS: https://mpsuat.portal.gov.gy
+      DMS_ENABLED: 'true'
+      DMS_PREFIX: sch_
+      DMS_ROOT_CABINET: citizen
+      DMS_TLS_INSECURE: 'true'
+      DMS_URL: https://mayanuat.services.gov.gy/api/v4
+      DMS_USERNAME: admin
+      JSON_BODY_LIMIT: 10mb
+      KC_CLIENT_ID: mps-portal
+      KC_ISSUER: ''
+      KC_REALM: Guyana-Citizen
+      KC_URL: https://keycloakuat.portal.gov.gy
+      LOG_FORMAT: json
+      LOG_LEVEL: info
+      MAIL_ENABLED: 'true'
+      MAIL_FROM: MPS Citizen Portal <scholarship.no-reply@mps.gov.gy>
+      MAIL_RECIPIENT_ALLOWLIST: '*'
+      MAIL_REDIRECT_TO: ''
+      MAIL_REPLY_TO: ''
+      MAIL_TIMEOUT_MS: '10000'
+      MFA_ENROL_SMS_TEMPLATE: 'MPS Citizen Portal: register this phone for sign-in approval:
+
+        {link}
+
+        Not you? Tell IT.'
+      MFA_ORIGINS: https://mpsuat.portal.gov.gy
+      MFA_PHONE_ATTRIBUTE: mobile
+      MFA_PUBLIC_URL: https://mpsuat.portal.gov.gy
+      MFA_REQUIRE_MOBILE: 'false'
+      MFA_RP_ID: mpsuat.portal.gov.gy
+      MFA_SMS_TEMPLATE: 'MPS Citizen Portal: approve sign-in (3 min, one use):
+
+        {link}
+
+        Not you? Ignore.'
+      NOTICE_POLL_SECONDS: '60'
+      PASSWORD_INVITE_TTL_HOURS: '72'
+      PG_IDLE_TIMEOUT_MS: '30000'
+      PG_POOL_MAX: '10'
+      PORT: '8081'
+      RATE_LIMIT_MAX: '300'
+      RATE_LIMIT_WINDOW_MS: '60000'
+      REDIS_ENABLED: 'false'
+      REDIS_URL: ''
+      SMS_API_URL: ''
+      SMS_ENABLED: 'false'
+      SMS_TIMEOUT_MS: '8000'
+      SMS_USERNAME: ''
+      SMTP_ALLOW_PLAINTEXT: 'false'
+      SMTP_HOST: webmail.egov.gy
+      SMTP_PORT: '465'
+      SMTP_SECURE: 'true'
+      SMTP_USER: scholarship.no-reply@mps.gov.gy
+      UPLOAD_MAX_MB: '25'
+  mps-citizen-frontend-config:
+    labels:
+      app: mps-citizen
+    data:
+      API_UPSTREAM: http://mps-citizen-backend-service.react-mps-uat.svc.cluster.local:8081
+      APP_NAME: MPS Citizen Portal
+      MFA_BASE: ''
+      MFA_ENABLED: 'false'
+      UPLOAD_MAX: 26m
+  mps-frontend-secret:
+    data:
+      API_BASE: /api
+      API_UPSTREAM: http://mps-backend-service.react-mps-uat.svc.cluster.local:8081
+      CITIZEN_PORTAL_URL: https://mpsuat.portal.gov.gy/citizen
+      DMS_MAX_UPLOAD: 25m
+deployments:
+  mps-backend:
+    labels:
+      app: mps-backend
+    spec:
+      progressDeadlineSeconds: 600
+      replicas: 2
+      revisionHistoryLimit: 10
+      selector:
+        matchLabels:
+          app: mps-backend
+      strategy:
+        rollingUpdate:
+          maxSurge: 1
+          maxUnavailable: 0
+        type: RollingUpdate
+      template:
+        metadata:
+          labels:
+            app: mps-backend
+        spec:
+          containers:
+            - envFrom:
+                - configMapRef:
+                    name: mps-backend-secret
+                - secretRef:
+                    name: mps-backend-secret
+              image: ravinadh/mps-uat-backend:mps-backend-uat68
+              imagePullPolicy: Always
+              livenessProbe:
+                failureThreshold: 6
+                httpGet:
+                  path: /health
+                  port: 8081
+                  scheme: HTTP
+                periodSeconds: 20
+                successThreshold: 1
+                timeoutSeconds: 5
+              name: mps-backend
+              ports:
+                - containerPort: 8081
+                  name: http
+                  protocol: TCP
+              readinessProbe:
+                failureThreshold: 3
+                httpGet:
+                  path: /health
+                  port: 8081
+                  scheme: HTTP
+                periodSeconds: 10
+                successThreshold: 1
+                timeoutSeconds: 5
+              resources:
+                limits:
+                  cpu: '1'
+                  memory: 1Gi
+                requests:
+                  cpu: 250m
+                  memory: 512Mi
+              startupProbe:
+                failureThreshold: 60
+                httpGet:
+                  path: /health
+                  port: 8081
+                  scheme: HTTP
+                periodSeconds: 10
+                successThreshold: 1
+                timeoutSeconds: 1
+              terminationMessagePath: /dev/termination-log
+              terminationMessagePolicy: File
+          dnsPolicy: ClusterFirst
+          restartPolicy: Always
+          schedulerName: default-scheduler
+          securityContext: {}
+          terminationGracePeriodSeconds: 30
+  mps-citizen-backend:
+    labels:
+      app: mps-citizen-backend
+    spec:
+      progressDeadlineSeconds: 600
+      replicas: 2
+      revisionHistoryLimit: 3
+      selector:
+        matchLabels:
+          app: mps-citizen-backend
+      strategy:
+        rollingUpdate:
+          maxSurge: 1
+          maxUnavailable: 0
+        type: RollingUpdate
+      template:
+        metadata:
+          labels:
+            app: mps-citizen-backend
+        spec:
+          containers:
+            - envFrom:
+                - configMapRef:
+                    name: mps-citizen-backend-config
+                - secretRef:
+                    name: mps-citizen-backend-secrets
+              image: ravinadh/mps-uat-backend:citizen-backend-uat12
+              imagePullPolicy: Always
+              livenessProbe:
+                failureThreshold: 3
+                httpGet:
+                  path: /health
+                  port: http
+                  scheme: HTTP
+                periodSeconds: 30
+                successThreshold: 1
+                timeoutSeconds: 5
+              name: mps-citizen-backend
+              ports:
+                - containerPort: 8081
+                  name: http
+                  protocol: TCP
+              readinessProbe:
+                failureThreshold: 3
+                httpGet:
+                  path: /health
+                  port: http
+                  scheme: HTTP
+                periodSeconds: 10
+                successThreshold: 1
+                timeoutSeconds: 5
+              resources:
+                limits:
+                  memory: 512Mi
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+              startupProbe:
+                failureThreshold: 36
+                httpGet:
+                  path: /health
+                  port: http
+                  scheme: HTTP
+                periodSeconds: 5
+                successThreshold: 1
+                timeoutSeconds: 1
+              terminationMessagePath: /dev/termination-log
+              terminationMessagePolicy: File
+          dnsPolicy: ClusterFirst
+          restartPolicy: Always
+          schedulerName: default-scheduler
+          securityContext: {}
+          terminationGracePeriodSeconds: 30
+  mps-citizen:
+    labels:
+      app: mps-citizen
+    spec:
+      progressDeadlineSeconds: 600
+      replicas: 2
+      revisionHistoryLimit: 3
+      selector:
+        matchLabels:
+          app: mps-citizen
+      strategy:
+        rollingUpdate:
+          maxSurge: 1
+          maxUnavailable: 0
+        type: RollingUpdate
+      template:
+        metadata:
+          labels:
+            app: mps-citizen
+        spec:
+          containers:
+            - envFrom:
+                - configMapRef:
+                    name: mps-citizen-frontend-config
+              image: ravinadh/mps-uat:citizen-uat12
+              imagePullPolicy: Always
+              livenessProbe:
+                failureThreshold: 3
+                httpGet:
+                  path: /citizen/
+                  port: http
+                  scheme: HTTP
+                periodSeconds: 30
+                successThreshold: 1
+                timeoutSeconds: 3
+              name: mps-citizen
+              ports:
+                - containerPort: 80
+                  name: http
+                  protocol: TCP
+              readinessProbe:
+                failureThreshold: 3
+                httpGet:
+                  path: /citizen/
+                  port: http
+                  scheme: HTTP
+                periodSeconds: 10
+                successThreshold: 1
+                timeoutSeconds: 3
+              resources:
+                limits:
+                  memory: 128Mi
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
+              terminationMessagePath: /dev/termination-log
+              terminationMessagePolicy: File
+          dnsPolicy: ClusterFirst
+          restartPolicy: Always
+          schedulerName: default-scheduler
+          securityContext: {}
+          terminationGracePeriodSeconds: 30
+  mps:
+    labels:
+      app: mps
+    spec:
+      progressDeadlineSeconds: 600
+      replicas: 2
+      revisionHistoryLimit: 10
+      selector:
+        matchLabels:
+          app: mps
+      strategy:
+        rollingUpdate:
+          maxSurge: 25%
+          maxUnavailable: 25%
+        type: RollingUpdate
+      template:
+        metadata:
+          labels:
+            app: mps
+        spec:
+          containers:
+            - envFrom:
+                - configMapRef:
+                    name: mps-frontend-secret
+              image: ravinadh/mps-uat:mps-uat68
+              imagePullPolicy: Always
+              livenessProbe:
+                failureThreshold: 3
+                httpGet:
+                  path: /
+                  port: 80
+                  scheme: HTTP
+                initialDelaySeconds: 30
+                periodSeconds: 20
+                successThreshold: 1
+                timeoutSeconds: 5
+              name: mps
+              ports:
+                - containerPort: 80
+                  name: http
+                  protocol: TCP
+              readinessProbe:
+                failureThreshold: 3
+                httpGet:
+                  path: /
+                  port: 80
+                  scheme: HTTP
+                initialDelaySeconds: 10
+                periodSeconds: 10
+                successThreshold: 1
+                timeoutSeconds: 5
+              resources:
+                limits:
+                  cpu: 500m
+                  memory: 512Mi
+                requests:
+                  cpu: 250m
+                  memory: 256Mi
+              terminationMessagePath: /dev/termination-log
+              terminationMessagePolicy: File
+          dnsPolicy: ClusterFirst
+          restartPolicy: Always
+          schedulerName: default-scheduler
+          securityContext: {}
+          terminationGracePeriodSeconds: 30
+ingresses:
+  mps-citizen:
+    labels:
+      app: mps-citizen
+    spec:
+      ingressClassName: kommander-traefik
+      rules:
+        - host: mpsuat.portal.gov.gy
+          http:
+            paths:
+              - backend:
+                  service:
+                    name: mps-citizen-service
+                    port:
+                      name: http
+                path: /citizen
+                pathType: Prefix
+  mps-ingress:
+    spec:
+      ingressClassName: kommander-traefik
+      rules:
+        - host: mpsuat.portal.gov.gy
+          http:
+            paths:
+              - backend:
+                  service:
+                    name: mps-backend-service
+                    port:
+                      number: 80
+                path: /health
+                pathType: Exact
+              - backend:
+                  service:
+                    name: mps-backend-service
+                    port:
+                      number: 80
+                path: /api
+                pathType: Prefix
+              - backend:
+                  service:
+                    name: mps-service
+                    port:
+                      number: 80
+                path: /
+                pathType: Prefix
+services:
+  mps-backend-service:
+    labels:
+      app: mps-backend
+    spec:
+      internalTrafficPolicy: Cluster
+      ipFamilies:
+        - IPv4
+      ipFamilyPolicy: SingleStack
+      ports:
+        - name: http
+          port: 8081
+          protocol: TCP
+          targetPort: 8081
+      selector:
+        app: mps-backend
+      sessionAffinity: None
+      type: ClusterIP
+  mps-citizen-backend-service:
+    labels:
+      app: mps-citizen-backend
+    spec:
+      internalTrafficPolicy: Cluster
+      ipFamilies:
+        - IPv4
+      ipFamilyPolicy: SingleStack
+      ports:
+        - name: http
+          port: 8081
+          protocol: TCP
+          targetPort: http
+      selector:
+        app: mps-citizen-backend
+      sessionAffinity: None
+      type: ClusterIP
+  mps-citizen-service:
+    labels:
+      app: mps-citizen
+    spec:
+      internalTrafficPolicy: Cluster
+      ipFamilies:
+        - IPv4
+      ipFamilyPolicy: SingleStack
+      ports:
+        - name: http
+          port: 80
+          protocol: TCP
+          targetPort: http
+      selector:
+        app: mps-citizen
+      sessionAffinity: None
+      type: ClusterIP
+  mps-postgres:
+    labels:
+      app: mps-postgres
+    spec:
+      internalTrafficPolicy: Cluster
+      ipFamilies:
+        - IPv4
+      ipFamilyPolicy: SingleStack
+      ports:
+        - name: postgres
+          port: 5432
+          protocol: TCP
+          targetPort: 5432
+      selector:
+        app: mps-postgres
+      sessionAffinity: None
+      type: ClusterIP
+  mps-service:
+    spec:
+      internalTrafficPolicy: Cluster
+      ipFamilies:
+        - IPv4
+      ipFamilyPolicy: SingleStack
+      ports:
+        - name: http
+          port: 80
+          protocol: TCP
+          targetPort: 80
+      selector:
+        app: mps
+      sessionAffinity: None
+      type: ClusterIP
+statefulSets:
+  mps-postgres:
+    labels:
+      app: mps-postgres
+    spec:
+      persistentVolumeClaimRetentionPolicy:
+        whenDeleted: Retain
+        whenScaled: Retain
+      podManagementPolicy: OrderedReady
+      replicas: 1
+      revisionHistoryLimit: 10
+      selector:
+        matchLabels:
+          app: mps-postgres
+      serviceName: mps-postgres
+      template:
+        metadata:
+          labels:
+            app: mps-postgres
+        spec:
+          containers:
+            - env:
+                - name: PGDATA
+                  value: /var/lib/postgresql/data/pgdata
+                - name: POSTGRES_DB
+                  valueFrom:
+                    secretKeyRef:
+                      key: POSTGRES_DB
+                      name: mps-postgres-secret
+                - name: POSTGRES_USER
+                  valueFrom:
+                    secretKeyRef:
+                      key: POSTGRES_USER
+                      name: mps-postgres-secret
+                - name: POSTGRES_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      key: POSTGRES_PASSWORD
+                      name: mps-postgres-secret
+              image: postgres:16
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                exec:
+                  command:
+                    - sh
+                    - -c
+                    - pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+                failureThreshold: 6
+                initialDelaySeconds: 30
+                periodSeconds: 20
+                successThreshold: 1
+                timeoutSeconds: 5
+              name: postgres
+              ports:
+                - containerPort: 5432
+                  name: postgres
+                  protocol: TCP
+              readinessProbe:
+                exec:
+                  command:
+                    - sh
+                    - -c
+                    - pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+                failureThreshold: 3
+                initialDelaySeconds: 10
+                periodSeconds: 10
+                successThreshold: 1
+                timeoutSeconds: 5
+              resources:
+                limits:
+                  cpu: '1'
+                  memory: 1Gi
+                requests:
+                  cpu: 250m
+                  memory: 512Mi
+              terminationMessagePath: /dev/termination-log
+              terminationMessagePolicy: File
+              volumeMounts:
+                - mountPath: /var/lib/postgresql/data
+                  name: postgres-data
+          dnsPolicy: ClusterFirst
+          restartPolicy: Always
+          schedulerName: default-scheduler
+          securityContext:
+            fsGroup: 999
+          terminationGracePeriodSeconds: 30
+      updateStrategy:
+        rollingUpdate:
+          partition: 0
+        type: RollingUpdate
+      volumeClaimTemplates:
+        - apiVersion: v1
+          kind: PersistentVolumeClaim
+          metadata:
+            name: postgres-data
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 10Gi
+            volumeMode: Filesystem
+          status:
+            phase: Pending

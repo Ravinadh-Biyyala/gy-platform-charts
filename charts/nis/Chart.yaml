@@ -1,0 +1,6 @@
+apiVersion: v2
+name: nis
+description: 'NIS portal: frontend (react-test in dev/qa, react-nis in uat) + nis-backend'
+type: application
+version: 0.1.0
+appVersion: 1.0.0

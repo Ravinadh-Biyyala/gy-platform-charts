@@ -1,0 +1,243 @@
+# nis - QA: namespace react-nis-qa on the DEV cluster
+# Recovered from the live namespace; reproduces it exactly (verify with kubectl diff).
+# Secrets are NOT here - the pods read existing Secrets by name.
+configMaps:
+  nis-backend-config:
+    labels:
+      app: nis-backend
+    data:
+      API_DOCS_ENABLED: 'false'
+      BASE_PATHS: /app/v1,/api/v1
+      CORS_ORIGINS: https://nisqa.portal.gov.gy
+      DB_SCHEMA: nis
+      JSON_BODY_LIMIT: 10mb
+      KC_AUDIENCE: ''
+      KC_CLIENT_ID: nis-portal
+      KC_ISSUER: ''
+      KC_REALM: nis-qa
+      KC_URL: https://keycloakdev.portal.gov.gy
+      LOG_FORMAT: json
+      LOG_LEVEL: info
+      PG_IDLE_TIMEOUT_MS: '30000'
+      PG_POOL_MAX: '10'
+      PORT: '8081'
+      RATE_LIMIT_MAX: '300'
+      RATE_LIMIT_WINDOW_MS: '60000'
+deployments:
+  nis-backend:
+    labels:
+      app: nis-backend
+    spec:
+      progressDeadlineSeconds: 600
+      replicas: 2
+      revisionHistoryLimit: 10
+      selector:
+        matchLabels:
+          app: nis-backend
+      strategy:
+        rollingUpdate:
+          maxSurge: 25%
+          maxUnavailable: 25%
+        type: RollingUpdate
+      template:
+        metadata:
+          labels:
+            app: nis-backend
+        spec:
+          containers:
+            - envFrom:
+                - configMapRef:
+                    name: nis-backend-config
+                - secretRef:
+                    name: nis-backend-secrets
+              image: ravinadh/ksquarenis:nis-backend-qav2
+              imagePullPolicy: Always
+              livenessProbe:
+                failureThreshold: 3
+                httpGet:
+                  path: /health
+                  port: 8081
+                  scheme: HTTP
+                periodSeconds: 30
+                successThreshold: 1
+                timeoutSeconds: 5
+              name: nis-backend
+              ports:
+                - containerPort: 8081
+                  name: http
+                  protocol: TCP
+              readinessProbe:
+                failureThreshold: 3
+                httpGet:
+                  path: /health
+                  port: 8081
+                  scheme: HTTP
+                periodSeconds: 10
+                successThreshold: 1
+                timeoutSeconds: 5
+              resources:
+                limits:
+                  cpu: 500m
+                  memory: 512Mi
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                runAsNonRoot: true
+                runAsUser: 1000
+              startupProbe:
+                failureThreshold: 36
+                httpGet:
+                  path: /health
+                  port: 8081
+                  scheme: HTTP
+                periodSeconds: 5
+                successThreshold: 1
+                timeoutSeconds: 1
+              terminationMessagePath: /dev/termination-log
+              terminationMessagePolicy: File
+          dnsPolicy: ClusterFirst
+          restartPolicy: Always
+          schedulerName: default-scheduler
+          securityContext: {}
+          terminationGracePeriodSeconds: 30
+  react-test:
+    spec:
+      progressDeadlineSeconds: 600
+      replicas: 1
+      revisionHistoryLimit: 10
+      selector:
+        matchLabels:
+          app: react-test
+      strategy:
+        type: Recreate
+      template:
+        metadata:
+          labels:
+            app: react-test
+        spec:
+          containers:
+            - image: ravinadh/ksquarenis:qav1
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                failureThreshold: 3
+                httpGet:
+                  path: /
+                  port: 3000
+                  scheme: HTTP
+                initialDelaySeconds: 30
+                periodSeconds: 20
+                successThreshold: 1
+                timeoutSeconds: 1
+              name: react-test
+              ports:
+                - containerPort: 3000
+                  protocol: TCP
+              readinessProbe:
+                failureThreshold: 3
+                httpGet:
+                  path: /
+                  port: 3000
+                  scheme: HTTP
+                initialDelaySeconds: 10
+                periodSeconds: 10
+                successThreshold: 1
+                timeoutSeconds: 1
+              resources:
+                limits:
+                  cpu: 500m
+                  memory: 512Mi
+                requests:
+                  cpu: 250m
+                  memory: 256Mi
+              terminationMessagePath: /dev/termination-log
+              terminationMessagePolicy: File
+              volumeMounts:
+                - mountPath: /shared-data
+                  name: nis-shared-data
+          dnsPolicy: ClusterFirst
+          restartPolicy: Always
+          schedulerName: default-scheduler
+          securityContext: {}
+          terminationGracePeriodSeconds: 30
+          volumes:
+            - name: nis-shared-data
+              persistentVolumeClaim:
+                claimName: nis-shared-data
+ingresses:
+  nis-backend:
+    labels:
+      app: nis-backend
+    spec:
+      ingressClassName: kommander-traefik
+      rules:
+        - host: nisqa.portal.gov.gy
+          http:
+            paths:
+              - backend:
+                  service:
+                    name: nis-backend-service
+                    port:
+                      name: http
+                path: /app/v1
+                pathType: Prefix
+  react-test-ingress:
+    spec:
+      ingressClassName: kommander-traefik
+      rules:
+        - host: nisqa.portal.gov.gy
+          http:
+            paths:
+              - backend:
+                  service:
+                    name: react-test-service
+                    port:
+                      number: 80
+                path: /
+                pathType: Prefix
+persistentVolumeClaims:
+  nis-shared-data:
+    annotations:
+      helm.sh/resource-policy: keep
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 10Gi
+      storageClassName: nutanix-volume
+      volumeMode: Filesystem
+services:
+  nis-backend-service:
+    labels:
+      app: nis-backend
+    spec:
+      internalTrafficPolicy: Cluster
+      ipFamilies:
+        - IPv4
+      ipFamilyPolicy: SingleStack
+      ports:
+        - name: http
+          port: 8081
+          protocol: TCP
+          targetPort: 8081
+      selector:
+        app: nis-backend
+      sessionAffinity: None
+      type: ClusterIP
+  react-test-service:
+    spec:
+      internalTrafficPolicy: Cluster
+      ipFamilies:
+        - IPv4
+      ipFamilyPolicy: SingleStack
+      ports:
+        - name: http
+          port: 80
+          protocol: TCP
+          targetPort: 3000
+      selector:
+        app: react-test
+      sessionAffinity: None
+      type: ClusterIP
