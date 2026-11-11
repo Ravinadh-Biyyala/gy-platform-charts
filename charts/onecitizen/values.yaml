@@ -1,0 +1,145 @@
+namespace: onecitizen-dev
+workloads:
+  onecitizen-frontend:
+    replicas: 1
+    frontend:
+      image: ravinadh/onecitizen-frontend:v74
+  onecitizen-backend:
+    replicas: 1
+    backend:
+      image: ravinadh/onecitizen-backend:v74
+  onecitizen-askgov-agent:
+    replicas: 1
+    askgov-agent:
+      image: ravinadh/askgov-agent:v74
+  postgres:
+    replicas: 1
+    postgres:
+      image: postgres:16
+config:
+  AGENT_ENABLED: 'true'
+  AGENT_HISTORY_REPLAY: '20'
+  AGENT_RATE_MAX: '30'
+  AGENT_RATE_WINDOW_MS: '60000'
+  AGENT_SERVICE_URL: http://askgov-agent:4100
+  AGENT_TIMEOUT_MS: '30000'
+  APPOINTMENTS_BASE_URL: https://appointment.staging.gov.gy
+  APPOINTMENTS_TIMEOUT_MS: '45000'
+  AUTH_REQUIRED: 'true'
+  BACKEND_API_URL: http://backend:4000/api/v1
+  BACKEND_TIMEOUT: '6'
+  BIOMETRIC_LINK_TTL_SECONDS: '600'
+  CASHGRANT_PGDATABASE: cash_grant
+  CASHGRANT_PGHOST: 10.60.1.81
+  CASHGRANT_PGPORT: '5432'
+  CASHGRANT_PGSSL: 'false'
+  CASHGRANT_VERIFICATION_TTL_MIN: '30'
+  CHPA_BASE_URL: https://chpasinglewindow.staging.gov.gy
+  CHPA_CLIENT_ID: REVIEW_AND_SET
+  CHPA_GRANT: jwt-bearer
+  CHPA_MODE: live
+  CHPA_PAY_EFT_DETAILS: ''
+  CHPA_PAY_IN_PERSON_DETAILS: ''
+  CHPA_PAY_MMG_DETAILS: ''
+  CHPA_REQUIRE_VERIFIED_EMAIL: 'true'
+  CHPA_SYNC_ENABLED: 'false'
+  CHPA_SYNC_INTERVAL_MIN: '15'
+  CHPA_TIMEOUT_MS: '30000'
+  CONNECT2GY_BASE_URL: https://connect2gy.gov.gy/t/gov.gy
+  CONNECT2GY_CLIENT_ID: REVIEW_AND_SET
+  CONNECT2GY_MODE: live
+  CONNECT2GY_REQUIRE_VERIFIED_EMAIL: 'true'
+  CONNECT2GY_SCOPE: openid email profile
+  CONNECT2GY_TIMEOUT_MS: '15000'
+  CORS_ORIGINS: https://onecitizendev.portal.gov.gy
+  DATA_DIR: /var/lib/onecitizen
+  DB_AUTO_MIGRATE: 'false'
+  DB_SEED: 'false'
+  DEV_OTP_CODE: REVIEW_AND_SET
+  DEV_OTP_ENABLED: 'true'
+  EID_DOCUMENT_TYPE: '1'
+  EID_FALLBACK_EMAIL: REVIEW_AND_SET
+  EID_FALLBACK_PHONE: REVIEW_AND_SET
+  EID_REGISTRY_API_KEY_HEADER: REVIEW_AND_SET
+  EID_REGISTRY_BASE_URL: https://api.e-id.gov.gy
+  EID_REGISTRY_MODE: mock
+  EID_REGISTRY_TIMEOUT_MS: '15000'
+  FACE_AUTH_ENABLED: 'true'
+  FACE_ENFORCE_ANTISPOOF: 'false'
+  FACE_MATCH_MODE: local
+  FACE_MATCH_THRESHOLD: '0.30'
+  GEOFENCE_BUFFER_KM: '2'
+  GEOFENCE_MODE: warn
+  GEOIP_COUNTRY_HEADER: ''
+  GEOIP_DB_PATH: ''
+  GEOIP_TRUST_FORWARDED: 'false'
+  GRO_DB_CONNECT_TIMEOUT_MS: '15000'
+  GRO_DB_DOMAIN: ''
+  GRO_DB_ENCRYPT: 'true'
+  GRO_DB_IDLE_TIMEOUT_MS: '30000'
+  GRO_DB_INSTANCE: ''
+  GRO_DB_NAME: GROIMSDB
+  GRO_DB_POOL_MAX: '10'
+  GRO_DB_POOL_MIN: '0'
+  GRO_DB_PORT: '1433'
+  GRO_DB_REQUEST_TIMEOUT_MS: '20000'
+  GRO_DB_SERVER: 192.168.11.105
+  GRO_DB_TLS_CIPHERS: DEFAULT@SECLEVEL=0
+  GRO_DB_TLS_MIN_VERSION: TLSv1
+  GRO_DB_TLS_SERVER_NAME: ''
+  GRO_DB_TRUST_SERVER_CERTIFICATE: 'true'
+  GRO_MAX_ROWS: '5000'
+  GRO_MODE: live
+  GRO_NEW_REGISTER_FROM: '1990-01-01'
+  JWT_ACCESS_TTL: '900'
+  JWT_ALG: HS256
+  JWT_REFRESH_TTL: '604800'
+  KEYCLOAK_BASE_URL: REVIEW_AND_SET
+  KEYCLOAK_CITIZEN_ROLE: REVIEW_AND_SET
+  KEYCLOAK_CLIENT_ID: REVIEW_AND_SET
+  KEYCLOAK_MODE: REVIEW_AND_SET
+  KEYCLOAK_REALM: REVIEW_AND_SET
+  KEYCLOAK_TIMEOUT_MS: REVIEW_AND_SET
+  LLM_MAX_TOKENS: REVIEW_AND_SET
+  LLM_MODEL: gpt-4o-mini
+  LOG_LEVEL: info
+  MAX_UPLOAD_MB: '25'
+  MAYAN_ALLOW_PUBLIC_URL: 'false'
+  MAYAN_BASE_URL: http://mayan-node-backend.mayan-edms.svc.cluster.local:4000
+  MAYAN_MODE: live
+  MAYAN_SOURCE: My-Guyana
+  MAYAN_TIMEOUT_MS: '30000'
+  MOCK_INTEGRATIONS: 'false'
+  MOCK_USERS: 'true'
+  NODE_ENV: development
+  ONBOARDING_SESSION_TTL_SECONDS: '900'
+  OTP_RESEND_SECONDS: '30'
+  OTP_TTL_SECONDS: '300'
+  PASSWORD_MIN_CLASSES: REVIEW_AND_SET
+  PASSWORD_MIN_LENGTH: REVIEW_AND_SET
+  PASSWORD_REJECT_IDENTITY_TERMS: REVIEW_AND_SET
+  PERSISTENCE_DRIVER: postgres
+  PGDATABASE: onecitizen
+  PGHOST: postgres
+  PGPORT: '5432'
+  PGSSL: 'false'
+  PG_CONNECT_TIMEOUT_MS: '10000'
+  PG_POOL_IDLE_MS: '30000'
+  PG_POOL_MAX: '10'
+  PUBLIC_WEB_URL: https://onecitizendev.portal.gov.gy
+  SEED_DIR: /app/data
+  SMTP_FROM_EMAIL: REVIEW_AND_SET
+  SMTP_FROM_NAME: My Guyana
+  SMTP_HOST: smtp.gmail.com
+  SMTP_MODE: smtp
+  SMTP_PORT: '587'
+  SMTP_SECURE: 'false'
+  SSO_ENABLED: 'true'
+  SSO_OTP_REQUIRED: 'false'
+  SSO_REDIRECT_URI: https://onecitizendev.portal.gov.gy/api/v1/auth/sso/callback
+  SSO_RETURN_URL: https://onecitizendev.portal.gov.gy/auth/sso
+  SSO_TRANSACTION_TTL_SECONDS: '600'
+  TLS_GROUPS: X25519:P-256:P-384
+  WEBAUTHN_ORIGINS: https://onecitizendev.portal.gov.gy
+  WEBAUTHN_RP_ID: onecitizendev.portal.gov.gy
+  WEBAUTHN_RP_NAME: My Guyana

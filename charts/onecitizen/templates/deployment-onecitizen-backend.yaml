@@ -1,0 +1,124 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: {{ .Values.namespace | quote }}
+  labels:
+    app.kubernetes.io/component: api
+    app.kubernetes.io/environment: dev
+    app.kubernetes.io/name: backend
+    app.kubernetes.io/part-of: onecitizen
+  name: onecitizen-backend
+spec:
+  progressDeadlineSeconds: 600
+  replicas: {{ (index .Values.workloads "onecitizen-backend" "replicas") }}
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app.kubernetes.io/environment: dev
+      app.kubernetes.io/name: backend
+      app.kubernetes.io/part-of: onecitizen
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: api
+        app.kubernetes.io/environment: dev
+        app.kubernetes.io/name: backend
+        app.kubernetes.io/part-of: onecitizen
+    spec:
+      containers:
+      - env:
+        - name: EID_REGISTRY_MODE
+          value: mock
+        - name: PORT
+          value: '4000'
+        - name: GRO_DB_USER
+          value: groims_oneconnect
+        - name: GRO_DB_PASSWORD
+          value: FT9YqaEw5PDiU7j+
+        envFrom:
+        - configMapRef:
+            name: onecitizen-config
+        - secretRef:
+            name: onecitizen-secrets
+        - secretRef:
+            name: onecitizen-smtp
+        image: {{ (index .Values.workloads "onecitizen-backend" "backend" "image") | quote }}
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /health
+            port: http
+            scheme: HTTP
+          periodSeconds: 20
+          successThreshold: 1
+          timeoutSeconds: 3
+        name: backend
+        ports:
+        - containerPort: 4000
+          name: http
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /health
+            port: http
+            scheme: HTTP
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 3
+        resources:
+          limits:
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 192Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+        startupProbe:
+          failureThreshold: 30
+          httpGet:
+            path: /health
+            port: http
+            scheme: HTTP
+          periodSeconds: 5
+          successThreshold: 1
+          timeoutSeconds: 1
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /var/lib/onecitizen/fixtures/eid-registry
+          name: eid-fixture
+          readOnly: true
+        - mountPath: /var/lib/onecitizen
+          name: uploads
+        - mountPath: /tmp
+          name: tmp
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext:
+        fsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      terminationGracePeriodSeconds: 45
+      volumes:
+      - configMap:
+          defaultMode: 420
+          name: onecitizen-eid-fixture
+        name: eid-fixture
+      - emptyDir: {}
+        name: uploads
+      - emptyDir: {}
+        name: tmp

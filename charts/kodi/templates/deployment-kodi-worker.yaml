@@ -1,0 +1,110 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: {{ .Values.namespace | quote }}
+  name: kodi-worker
+spec:
+  progressDeadlineSeconds: 600
+  replicas: {{ (index .Values.workloads "kodi-worker" "replicas") }}
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: kodi-worker
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: kodi-worker
+    spec:
+      containers:
+      - command:
+        - kodi-worker
+        env:
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: OPENAI_API_KEY
+              name: kodi-openai-key
+        - name: KODI_ENV
+          value: production
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              key: DATABASE_URL
+              name: kodi-connection-urls
+        - name: KODI_BROKER_URL
+          valueFrom:
+            secretKeyRef:
+              key: KODI_BROKER_URL
+              name: kodi-connection-urls
+        - name: KODI_BUS_URL
+          valueFrom:
+            secretKeyRef:
+              key: KODI_BUS_URL
+              name: kodi-connection-urls
+        - name: KODI_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              key: KODI_SECRET_KEY
+              name: kodi-app-secrets
+        - name: KODI_JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: KODI_JWT_SECRET
+              name: kodi-app-secrets
+        - name: KODI_BUNDLED_S3_ENDPOINT
+          value: http://kodi-rustfs:9000
+        - name: KODI_BUNDLED_S3_BUCKET
+          value: kodi-documents
+        - name: KODI_BUNDLED_S3_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              key: RUSTFS_ACCESS_KEY
+              name: kodi-rustfs-secrets
+        - name: KODI_BUNDLED_S3_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              key: RUSTFS_SECRET_KEY
+              name: kodi-rustfs-secrets
+        - name: KODI_LOCAL_AI
+          value: '0'
+        - name: OTEL_SERVICE_NAMESPACE
+          value: kodi
+        - name: KODI_WORKER_CONCURRENCY
+          value: '2'
+        envFrom:
+        - configMapRef:
+            name: kodi-config
+        image: {{ (index .Values.workloads "kodi-worker" "worker" "image") | quote }}
+        imagePullPolicy: Always
+        name: worker
+        resources:
+          limits:
+            cpu: '2'
+            memory: 2Gi
+          requests:
+            cpu: 150m
+            memory: 512Mi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /app/data
+          name: data
+      dnsPolicy: ClusterFirst
+      enableServiceLinks: false
+      nodeSelector:
+        kubernetes.io/hostname: ksquare-cluster-workload-md-0-z9nwf-w75vg-6nbsb
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext:
+        fsGroup: 0
+        fsGroupChangePolicy: OnRootMismatch
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: kodi-data

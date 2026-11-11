@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  namespace: {{ .Values.namespace | quote }}
+  finalizers:
+  - kubernetes.io/pvc-protection
+  name: kodi-data
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: nutanix-volume
+  volumeMode: Filesystem

@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  namespace: {{ .Values.namespace | quote }}
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: 'true'
+  name: kodi-ingress
+spec:
+  ingressClassName: kommander-traefik
+  rules:
+  - host: kodidev.portal.gov.gy
+    http:
+      paths:
+      - backend:
+          service:
+            name: kodi-ui
+            port:
+              number: 8080
+        path: /
+        pathType: Prefix
+  tls:
+  - hosts:
+    - kodidev.portal.gov.gy
+    secretName: kodi-dev-tls

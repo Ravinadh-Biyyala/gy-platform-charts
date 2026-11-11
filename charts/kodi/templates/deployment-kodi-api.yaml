@@ -1,0 +1,153 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: {{ .Values.namespace | quote }}
+  name: kodi-api
+spec:
+  progressDeadlineSeconds: 600
+  replicas: {{ (index .Values.workloads "kodi-api" "replicas") }}
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: kodi-api
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: kodi-api
+    spec:
+      containers:
+      - command:
+        - kodi-api
+        env:
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: OPENAI_API_KEY
+              name: kodi-openai-key
+        - name: KODI_ENV
+          value: production
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              key: DATABASE_URL
+              name: kodi-connection-urls
+        - name: KODI_BROKER_URL
+          valueFrom:
+            secretKeyRef:
+              key: KODI_BROKER_URL
+              name: kodi-connection-urls
+        - name: KODI_BUS_URL
+          valueFrom:
+            secretKeyRef:
+              key: KODI_BUS_URL
+              name: kodi-connection-urls
+        - name: KODI_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              key: KODI_SECRET_KEY
+              name: kodi-app-secrets
+        - name: KODI_JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: KODI_JWT_SECRET
+              name: kodi-app-secrets
+        - name: KODI_BUNDLED_S3_ENDPOINT
+          value: http://kodi-rustfs:9000
+        - name: KODI_BUNDLED_S3_BUCKET
+          value: kodi-documents
+        - name: KODI_BUNDLED_S3_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              key: RUSTFS_ACCESS_KEY
+              name: kodi-rustfs-secrets
+        - name: KODI_BUNDLED_S3_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              key: RUSTFS_SECRET_KEY
+              name: kodi-rustfs-secrets
+        - name: KODI_LOCAL_AI
+          value: '0'
+        - name: OTEL_SERVICE_NAMESPACE
+          value: kodi
+        - name: KODI_TRUSTED_PROXIES
+          value: '*'
+        - name: KODI_SETUP_TOKEN_FILE
+          value: /var/lib/kodi/setup/setup-token
+        - name: KODI_UI_HEALTH_URL
+          value: http://kodi-ui:8080/healthz
+        - name: KODI_PUBLIC_BASE_URL
+          value: http://localhost:8080
+        - name: KODI_FRONTEND_BASE_URL
+          value: http://localhost:8080
+        envFrom:
+        - configMapRef:
+            name: kodi-config
+        image: {{ (index .Values.workloads "kodi-api" "api" "image") | quote }}
+        imagePullPolicy: Always
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /health
+            port: 8000
+            scheme: HTTP
+          periodSeconds: 20
+          successThreshold: 1
+          timeoutSeconds: 1
+        name: api
+        ports:
+        - containerPort: 8000
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /health
+            port: 8000
+            scheme: HTTP
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources:
+          limits:
+            cpu: '1'
+            memory: 2Gi
+          requests:
+            cpu: 150m
+            memory: 512Mi
+        startupProbe:
+          failureThreshold: 30
+          httpGet:
+            path: /health
+            port: 8000
+            scheme: HTTP
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /app/data
+          name: data
+        - mountPath: /var/lib/kodi/setup
+          name: setup
+      dnsPolicy: ClusterFirst
+      enableServiceLinks: false
+      nodeSelector:
+        kubernetes.io/hostname: ksquare-cluster-workload-md-0-z9nwf-w75vg-6nbsb
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext:
+        fsGroup: 0
+        fsGroupChangePolicy: OnRootMismatch
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: kodi-data
+      - name: setup
+        persistentVolumeClaim:
+          claimName: kodi-setup

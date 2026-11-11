@@ -1,0 +1,6 @@
+apiVersion: v2
+name: onecitizen
+description: onecitizen DEV workload chart (export-based; review before adoption)
+type: application
+version: 0.1.0
+appVersion: 1.0.0

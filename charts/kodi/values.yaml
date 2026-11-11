@@ -1,0 +1,38 @@
+namespace: kodi-dev
+workloads:
+  kodi-api:
+    replicas: 1
+    api:
+      image: ravinadh/kodi-api:dev-511b7d35d368c75afee7e8ac6b4ed820d520e40b
+  kodi-ui:
+    replicas: 1
+    ui:
+      image: ravinadh/kodi-ui:dev-c8421768f7873c64898a48480b79f33c0af98765
+  kodi-worker:
+    replicas: 1
+    worker:
+      image: ravinadh/kodi-api:dev-c8421768f7873c64898a48480b79f33c0af98765
+  kodi-postgres:
+    replicas: 1
+    postgres:
+      image: pgvector/pgvector:pg16
+  kodi-rabbitmq:
+    replicas: 1
+    rabbitmq:
+      image: rabbitmq:3.13-management
+  kodi-rustfs:
+    replicas: 1
+    rustfs:
+      image: rustfs/rustfs:1.0.3
+config:
+  KODI_ENV: production
+  KODI_MODEL_CHAT: gpt-5.5
+  KODI_MODEL_CHAT_PROVIDER: openai
+  KODI_MODEL_CLASSIFY: gpt-5.5
+  KODI_MODEL_CLASSIFY_PROVIDER: openai
+  KODI_MODEL_EMBED: text-embedding-3-large
+  KODI_MODEL_EMBED_PROVIDER: openai
+  KODI_MODEL_EXTRACT: gpt-5.5
+  KODI_MODEL_EXTRACT_PROVIDER: openai
+  KODI_PLATFORM_ADMINS: REVIEW_AND_SET
+  KODI_SELF_REGISTRATION: false

@@ -1,0 +1,96 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  namespace: {{ .Values.namespace | quote }}
+  labels:
+    app.kubernetes.io/environment: dev
+    app.kubernetes.io/part-of: onecitizen
+  name: postgres
+spec:
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Retain
+    whenScaled: Retain
+  podManagementPolicy: OrderedReady
+  replicas: {{ (index .Values.workloads "postgres" "replicas") }}
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: postgres
+      app.kubernetes.io/environment: dev
+      app.kubernetes.io/part-of: onecitizen
+  serviceName: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+        app.kubernetes.io/environment: dev
+        app.kubernetes.io/part-of: onecitizen
+    spec:
+      containers:
+      - env:
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              key: PGUSER
+              name: onecitizen-secrets
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: PGPASSWORD
+              name: onecitizen-secrets
+        - name: POSTGRES_DB
+          value: onecitizen
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        image: {{ (index .Values.workloads "postgres" "postgres" "image") | quote }}
+        imagePullPolicy: IfNotPresent
+        name: postgres
+        ports:
+        - containerPort: 5432
+          name: postgres
+          protocol: TCP
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+          failureThreshold: 6
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /var/lib/postgresql/data
+          name: postgres-data
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+  updateStrategy:
+    rollingUpdate:
+      partition: 0
+    type: RollingUpdate
+  volumeClaimTemplates:
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      creationTimestamp: null
+      labels:
+        app.kubernetes.io/environment: dev
+        app.kubernetes.io/part-of: onecitizen
+      name: postgres-data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 50Gi
+      storageClassName: nutanix-volume
+      volumeMode: Filesystem
+    status:
+      phase: Pending
