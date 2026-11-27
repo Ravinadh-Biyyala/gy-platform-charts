@@ -30,6 +30,10 @@ spec:
         app.kubernetes.io/name: backend
         app.kubernetes.io/part-of: onecitizen
     spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
       - env:
         - name: EID_REGISTRY_MODE

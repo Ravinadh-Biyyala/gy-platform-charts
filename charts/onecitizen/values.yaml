@@ -1,4 +1,7 @@
 namespace: onecitizen-dev
+
+imagePullSecrets: []
+
 workloads:
   onecitizen-frontend:
     replicas: 1
