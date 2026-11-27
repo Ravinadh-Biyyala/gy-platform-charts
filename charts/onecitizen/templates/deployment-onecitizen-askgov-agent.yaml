@@ -30,6 +30,10 @@ spec:
         app.kubernetes.io/name: askgov-agent
         app.kubernetes.io/part-of: onecitizen
     spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
       - env:
         - name: HOST

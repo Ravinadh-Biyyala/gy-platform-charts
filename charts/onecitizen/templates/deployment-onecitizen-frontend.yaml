@@ -30,6 +30,10 @@ spec:
         app.kubernetes.io/name: frontend
         app.kubernetes.io/part-of: onecitizen
     spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
       - image: {{ (index .Values.workloads "onecitizen-frontend" "frontend" "image") | quote }}
         imagePullPolicy: IfNotPresent

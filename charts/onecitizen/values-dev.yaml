@@ -1,2 +1,15 @@
-# DEV values are captured in values.yaml; override here as needed.
-{}
+imagePullSecrets:
+  - name: ekdigital-regcred
+
+workloads:
+  onecitizen-backend:
+    backend:
+      image: ekdigital/onecitizen-nonprod:dev-backend-v126
+
+  onecitizen-frontend:
+    frontend:
+      image: ekdigital/onecitizen-nonprod:dev-frontend-v127
+
+  onecitizen-askgov-agent:
+    askgov-agent:
+      image: ekdigital/askgov-nonprod:dev-agent-v127
